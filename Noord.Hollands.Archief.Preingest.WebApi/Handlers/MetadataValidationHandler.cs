@@ -384,11 +384,15 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 {
                     var beperkingGebruik = beperkingenLijst.FirstOrDefault(item => item.BegripLabel.Equals(this.BegripLabel, StringComparison.Ordinal));
                     if (beperkingGebruik == null)
+                    {
                         sb.Append(String.Format("Element begripLabel met waarde '{0}' niet gevonden in de begrippenlijst", this.BegripLabel));
+                    }
                     else
+                    {
                         sb.Append(String.Format("Element begripLabel met waarde '{0}' gevonden in de begrippenlijst", this.BegripLabel));
-
-                    return new BeperkingResult { IsSuccess = (beperkingGebruik != null), Results = new string[] { sb.ToString() } };
+                    }
+                    sb.Append("Maar element begripCode is niet aanwezig of voorzien van een waarde");
+                    return new BeperkingResult { IsSuccess = false, Results = new string[] { sb.ToString() } };
                 }
                 //check both if not empty
                 if (!String.IsNullOrEmpty(this.BegripLabel) && !String.IsNullOrEmpty(this.BegripCode))
