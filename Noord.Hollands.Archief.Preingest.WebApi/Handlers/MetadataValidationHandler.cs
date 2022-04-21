@@ -18,6 +18,9 @@ using System.Xml.Linq;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using System.Text;
+using Noord.Hollands.Archief.Preingest.WebApi.Utilities;
+using System.Reflection;
+using System.Xml;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -81,67 +84,16 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 {
                     Logger.LogInformation("Metadata validatie : {0}", file);
                     var schemaResult = ValidateWithSchema(file);
-                    
+                    ValidateNonEmptyStringValues(file, schemaResult);
+
                     if (this.IsMDTO)
                     {
-                        var beperkingenResult = ValidateWithBeperkingenLijstAuteursWet1995(file);
-                        schemaResult.IsConfirmBegrippenLijst = beperkingenResult.IsSuccess;
-                        List<String> messages = new List<string>();
-                        messages.AddRange(schemaResult.ErrorMessages);
-                        messages.AddRange(beperkingenResult.Results);
-                        schemaResult.ErrorMessages = messages.ToArray();
+                        ValidateWithBeperkingenLijstAuteursWet1995(file, schemaResult);
+                        ValidateBeperkingGebruikTermijn(file, schemaResult);
                     }
                     if (this.IsToPX)
-                    {
-                        XDocument bestandXml = XDocument.Load(file);
-                        XNamespace bns = bestandXml.Root.GetDefaultNamespace();
-                        if (bestandXml.Root.Elements().First().Name.LocalName == "bestand")
-                        {
-                            List<String> messages = new List<string>();
-                            messages.AddRange(schemaResult.ErrorMessages);
-
-                            FileInfo currentMetadataFile = new FileInfo(file);
-                            DirectoryInfo currentMetadataFolder = currentMetadataFile.Directory;
-                            String currentMetadataFolderName = currentMetadataFolder.Name;
-                            var folderMetadataFile = currentMetadataFolder.GetFiles(String.Format("{0}.metadata", currentMetadataFolderName)).FirstOrDefault();
-                            if(folderMetadataFile == null)
-                            {
-                                messages.AddRange(new string[] {
-                                    String.Format("Kan het bovenliggende Dossier of Record metadata bestand met de naam '{0}.metadata' niet vinden in de map '{0}'", currentMetadataFolderName),
-                                    String.Format("Controleren op openbaarheid is niet gelukt voor {0}.", file)});
-                            }
-                            else
-                            {                                    
-                                //if upper parent metadata is Dossier, need to check openbaarheid in bestand metadata
-                                //if pupper parent metadata is Record, just skip
-                                XDocument recordOrDossierXml = XDocument.Load(folderMetadataFile.FullName);
-                                XNamespace rdns = recordOrDossierXml.Root.GetDefaultNamespace();
-                                if(recordOrDossierXml.Root.Element(rdns + "aggregatie").Element(rdns + "aggregatieniveau").Value.Equals("Dossier", StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    var openbaarheid = bestandXml.Root.Element(bns + "bestand").Element(bns + "openbaarheid");
-                                    if(openbaarheid == null)
-                                    {
-                                        messages.AddRange(new string[] { String.Format("Bovenliggende metadata bestand heeft een aggregatieniveau 'Dossier'. Op bestandsniveau wordt dan 'openbaarheid' element verwacht. Element is niet gevonden") });
-                                    }
-                                    else if (openbaarheid.Element(bns + "omschrijvingBeperkingen") == null)
-                                    {
-                                        messages.AddRange(new string[] { String.Format("Bovenliggende metadata bestand heeft een aggregatieniveau 'Dossier'. Op bestandsniveau wordt dan 'openbaarheid' element verwacht. Element 'openbaarheid' gevonden maar niet element 'omschrijvingBeperkingen'") });
-                                    }
-                                    else
-                                    {
-                                        string omschrijvingBeperkingen = openbaarheid.Element(bns + "omschrijvingBeperkingen").Value;
-                                        Match match = Regex.Match(omschrijvingBeperkingen, "^(Openbaar|Niet openbaar|Beperkt openbaar)$", RegexOptions.ECMAScript);
-                                        if (!match.Success)
-                                        {
-                                            messages.AddRange(new string[] { String.Format("Onjuiste waarde voor element 'omschrijvingBeperkingen' gevonden. Gevonden waarde = '{1}', verwachte waarde = 'Openbaar' of 'Niet openbaar' of 'Beperkt openbaar' in {0}", file, omschrijvingBeperkingen) });
-                                        }
-                                    }
-                                }
-                            }
-
-                            schemaResult.IsConfirmSchema = !(messages.Count() > 0);
-                            schemaResult.ErrorMessages = messages.ToArray();
-                        }
+                    {                        
+                        ValidateOpenbaarheidRule(file, schemaResult);                        
                     }
 
                     validation.Add(schemaResult);
@@ -185,6 +137,240 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             }
         }
 
+        /// <summary>
+        /// Validates the non empty string values. ToPX and MDTO metadata version
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="schemaResult">The schema result.</param>
+        private void ValidateNonEmptyStringValues(string file, MetadataValidationItem schemaResult)
+        {
+            try
+            {
+                XmlDocument xml = new XmlDocument();
+                xml.Load(file);                
+
+                var nsmgr = new XmlNamespaceManager(xml.NameTable);
+                if (this.IsMDTO)
+                    nsmgr.AddNamespace("m", "https://www.nationaalarchief.nl/mdto");
+                if(this.IsToPX)
+                    nsmgr.AddNamespace("t", "http://www.nationaalarchief.nl/ToPX/v2.3");
+
+                XmlNodeList xNodeList = this.IsToPX ? xml.SelectNodes("/t:ToPX//*/text()", nsmgr) : xml.SelectNodes("/m:MDTO//*/text()", nsmgr);
+                foreach (XmlNode xNode in xNodeList)
+                {
+                    string text = xNode.InnerText;
+                    string name = xNode.ParentNode.Name;
+                    //check if start with non-printable characters - first 128 ASCII characters
+                    Match match = Regex.Match(text, @"[^\x20-\x7E]+", RegexOptions.Multiline);
+                    if (match.Success)
+                    {
+                        var findings = schemaResult.ErrorMessages.ToList();
+                        findings.Add(String.Format("Non-printable karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
+                        schemaResult.ErrorMessages = findings.ToArray();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                var errorMessages = new List<String>();
+                Logger.LogError(e, String.Format("Exception occured in metadata validation ('ValidateBeperingGebruikTermijn') for metadata file '{0}'!", file));
+                errorMessages.Clear();
+                errorMessages.Add(String.Format("Exception occured in metadata validation ('ValidateBeperingGebruikTermijn') for metadata file '{0}'!", file));
+                errorMessages.Add(e.Message);
+                errorMessages.Add(e.StackTrace);
+
+                var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                currentErrorMessages.AddRange(errorMessages);
+                //error
+                schemaResult.ErrorMessages.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Validates the bepering gebruik termijn.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="schemaResult">The schema result.</param>
+        /// <exception cref="System.ApplicationException"></exception>
+        private void ValidateBeperkingGebruikTermijn(string file, MetadataValidationItem schemaResult)
+        {
+            try
+            {
+                //parse to xml to see if is valid XML
+                XDocument xmlDocument = XDocument.Load(file);
+                var ns = xmlDocument.Root.GetDefaultNamespace();
+                if (xmlDocument.Root.Element(ns + "informatieobject") == null)
+                    return;//if bestandsType, return immediate
+
+                Entities.MDTO.v1_0.mdtoType mdto = DeserializerHelper.DeSerializeObject<Entities.MDTO.v1_0.mdtoType>(File.ReadAllText(file));
+                var informatieobject = mdto.Item as Entities.MDTO.v1_0.informatieobjectType;
+                if (informatieobject == null)
+                    throw new ApplicationException(String.Format("Omzetten naar informatieobject type niet gelukt. Valideren van beperkingGebruikTermijn is niet gelukt voor metadata '{0}'", file));
+
+                if (informatieobject.beperkingGebruik == null)
+                    return;
+
+                informatieobject.beperkingGebruik.ToList().ForEach(item =>
+                {
+                    if (item.beperkingGebruikTermijn == null)
+                        return;
+
+                    DateTime? termijnStartdatumLooptijd = item.beperkingGebruikTermijn.termijnStartdatumLooptijd;
+                    string termijnLooptijd = item.beperkingGebruikTermijn.termijnLooptijd;
+                    string termijnEinddatum = item.beperkingGebruikTermijn.termijnEinddatum;
+
+                    DateTime parseOut = DateTime.MinValue;
+                    DateTime.TryParse(termijnEinddatum, out parseOut);
+
+                    DateTime? dtTermijnStartdatumLooptijd = termijnStartdatumLooptijd;
+                    TimeSpan? tsTermijnLooptijd = String.IsNullOrEmpty(termijnLooptijd) ? null : XmlConvert.ToTimeSpan(termijnLooptijd);
+                    DateTime? dtTermijnEinddatum = String.IsNullOrEmpty(termijnEinddatum) ? null : parseOut;
+
+                    if (dtTermijnStartdatumLooptijd.HasValue && tsTermijnLooptijd.HasValue && dtTermijnEinddatum.HasValue)
+                    {
+                        //calculeren
+                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                        DateTime isdtTermijnStartdatumLooptijd = dtTermijnStartdatumLooptijd.Value.Add(tsTermijnLooptijd.Value);
+                        int result = DateTime.Compare(dtTermijnStartdatumLooptijd.Value, isdtTermijnStartdatumLooptijd);
+
+                        if (result < 0)
+                            currentErrorMessages.Add("Meldig: termijnEinddatum is eerder dan (termijnStartdatum + termijnLooptijd)"); //relationship = "is eerder dan";
+                        else if (result == 0)
+                            currentErrorMessages.Add("Meldig: termijnEinddatum is gelijk (termijnStartdatum + termijnLooptijd)");//relationship = "is gelijk aan";
+                        else
+                            currentErrorMessages.Add("Meldig: termijnEinddatum is later dan (termijnStartdatum + termijnLooptijd)");  //relationship = "is later dan";
+                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
+                    if (dtTermijnStartdatumLooptijd.HasValue && tsTermijnLooptijd.HasValue && !dtTermijnEinddatum.HasValue)
+                    {
+                        //Melding: 'termijnEinddatum' heeft geen waarde, maar 'termijnStartdatum' en 'termijnLooptijd' hebben geldige waarden.
+                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                        currentErrorMessages.Add("Melding: 'termijnEinddatum' heeft geen waarde, maar 'termijnStartdatum' en 'termijnLooptijd' hebben geldige waarden");
+                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
+                    if (dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && dtTermijnEinddatum.HasValue)
+                    {
+                        /**
+                         * 
+                         * Check:
+                            termijnEinddatum => termijnStartdatum
+                            Indien fout: termijnEinddatum is eerder dan termijnStartdatum
+
+                            Melding die ook moet worden gegeven:
+                            Er is geen waarde opgegeven voor het element <termijnLooptijd>,  er is wel een <termijnStartdatum>  en <termijnEinddatum>
+                         */
+                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                        int result = DateTime.Compare(dtTermijnStartdatumLooptijd.Value, dtTermijnEinddatum.Value);
+
+                        if (result < 0)
+                            currentErrorMessages.Add("Meldig: termijnStartdatum is eerder dan termijnEinddatum"); //relationship = "is eerder dan";
+                        else if (result == 0)
+                            currentErrorMessages.Add("Meldig: termijnStartdatum is gelijk termijnEinddatum");//relationship = "is gelijk aan";
+                        else
+                            currentErrorMessages.Add("Meldig: termijnStartdatum is later dan termijnEinddatum");  //relationship = "is later dan";
+                         
+                        currentErrorMessages.Add("Melding: er is geen waarde opgegeven voor het element 'termijnLooptijd',  er is wel een 'termijnStartdatum' en 'termijnEinddatum'");
+                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
+                    if (!dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && dtTermijnEinddatum.HasValue)
+                    {
+                        return;
+                    }
+                    if (!dtTermijnStartdatumLooptijd.HasValue && tsTermijnLooptijd.HasValue && !dtTermijnEinddatum.HasValue)
+                    {
+                        //Melding: de elementen 'termijnStartdatum en 'termijnEinddatum' ontbreken, er is wel een 'termijnLooptijd'
+                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                        currentErrorMessages.Add("Melding: de elementen 'termijnStartdatum en 'termijnEinddatum' ontbreken, er is wel een 'termijnLooptijd'");
+                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
+                    if (!dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && !dtTermijnEinddatum.HasValue)
+                    {
+                        return;
+                    }
+                });
+
+            }
+            catch (Exception e)
+            {
+                var errorMessages = new List<String>();
+                Logger.LogError(e, String.Format("Exception occured in metadata validation ('ValidateBeperingGebruikTermijn') for metadata file '{0}'!", file));
+                errorMessages.Clear();
+                errorMessages.Add(String.Format("Exception occured in metadata validation ('ValidateBeperingGebruikTermijn') for metadata file '{0}'!", file));
+                errorMessages.Add(e.Message);
+                errorMessages.Add(e.StackTrace);
+
+                var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                currentErrorMessages.AddRange(errorMessages);
+                //error
+                schemaResult.ErrorMessages.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Validates the openbaarheid rule. Only for ToPX.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="schemaResult">The schema result.</param>
+        private void ValidateOpenbaarheidRule(string file, MetadataValidationItem schemaResult)
+        {
+            XDocument bestandXml = XDocument.Load(file);
+            XNamespace bns = bestandXml.Root.GetDefaultNamespace();
+            if (bestandXml.Root.Elements().First().Name.LocalName == "bestand")
+            {
+                List<String> messages = new List<string>();
+                messages.AddRange(schemaResult.ErrorMessages);
+
+                FileInfo currentMetadataFile = new FileInfo(file);
+                DirectoryInfo currentMetadataFolder = currentMetadataFile.Directory;
+                String currentMetadataFolderName = currentMetadataFolder.Name;
+                var folderMetadataFile = currentMetadataFolder.GetFiles(String.Format("{0}.metadata", currentMetadataFolderName)).FirstOrDefault();
+                if (folderMetadataFile == null)
+                {
+                    messages.AddRange(new string[] {
+                                    String.Format("Kan het bovenliggende Dossier of Record metadata bestand met de naam '{0}.metadata' niet vinden in de map '{0}'", currentMetadataFolderName),
+                                    String.Format("Controleren op openbaarheid is niet gelukt voor {0}.", file)});
+                }
+                else
+                {
+                    //if upper parent metadata is Dossier, need to check openbaarheid in bestand metadata
+                    //if pupper parent metadata is Record, just skip
+                    XDocument recordOrDossierXml = XDocument.Load(folderMetadataFile.FullName);
+                    XNamespace rdns = recordOrDossierXml.Root.GetDefaultNamespace();
+                    if (recordOrDossierXml.Root.Element(rdns + "aggregatie").Element(rdns + "aggregatieniveau").Value.Equals("Dossier", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        var openbaarheid = bestandXml.Root.Element(bns + "bestand").Element(bns + "openbaarheid");
+                        if (openbaarheid == null)
+                        {
+                            messages.AddRange(new string[] { String.Format("Bovenliggende metadata bestand heeft een aggregatieniveau 'Dossier'. Op bestandsniveau wordt dan 'openbaarheid' element verwacht. Element is niet gevonden") });
+                        }
+                        else if (openbaarheid.Element(bns + "omschrijvingBeperkingen") == null)
+                        {
+                            messages.AddRange(new string[] { String.Format("Bovenliggende metadata bestand heeft een aggregatieniveau 'Dossier'. Op bestandsniveau wordt dan 'openbaarheid' element verwacht. Element 'openbaarheid' gevonden maar niet element 'omschrijvingBeperkingen'") });
+                        }
+                        else
+                        {
+                            string omschrijvingBeperkingen = openbaarheid.Element(bns + "omschrijvingBeperkingen").Value;
+                            Match match = Regex.Match(omschrijvingBeperkingen, "^(Openbaar|Niet openbaar|Beperkt openbaar)$", RegexOptions.ECMAScript);
+                            if (!match.Success)
+                            {
+                                messages.AddRange(new string[] { String.Format("Onjuiste waarde voor element 'omschrijvingBeperkingen' gevonden. Gevonden waarde = '{1}', verwachte waarde = 'Openbaar' of 'Niet openbaar' of 'Beperkt openbaar' in {0}", file, omschrijvingBeperkingen) });
+                            }
+                        }
+                    }
+                }
+
+                schemaResult.IsConfirmSchema = !(messages.Count() > 0);
+                schemaResult.ErrorMessages = messages.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Validates metadata with XSD schema. For ToPX and MDTO.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <returns></returns>
+        /// <exception cref="System.Exception">Failed to request data! Status code not equals 200.</exception>
+        /// <exception cref="System.ApplicationException">Metadata validation request failed!</exception>
         private MetadataValidationItem ValidateWithSchema(string file)
         {
             MetadataValidationItem validation = new MetadataValidationItem();
@@ -270,8 +456,14 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             return validation;
         }
 
-        private BeperkingResult ValidateWithBeperkingenLijstAuteursWet1995(string file, BeperkingCategorie categorie = BeperkingCategorie.OPENBAARHEID_ARCHIEFWET_1995)
+        /// <summary>
+        /// Validates the with beperkingen lijst auteurs wet1995. Only for MDTO.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="schemaResult">The schema result.</param>
+        private void ValidateWithBeperkingenLijstAuteursWet1995(string file, MetadataValidationItem schemaResult)
         {
+            BeperkingCategorie categorie = BeperkingCategorie.OPENBAARHEID_ARCHIEFWET_1995;
             BeperkingResult validation = new BeperkingResult() { IsSuccess = null, Results = new string[0] { } } ;
             var errorMessages = new List<String>();
 
@@ -281,7 +473,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 XDocument xmlDocument = XDocument.Load(file);
                 var ns = xmlDocument.Root.GetDefaultNamespace();
                 if (xmlDocument.Root.Element(ns + "informatieobject") == null)
-                    return validation;//if bestandsType, return immediate
+                {
+                    return;//if bestandsType, return immediate
+                }
 
                 var countBeperkingGebruik = xmlDocument.Root.Element(ns + "informatieobject").Elements(ns + "beperkingGebruik").Select(item => new Beperking
                 {
@@ -294,7 +488,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 }).ToList();
 
                 if (countBeperkingGebruik.Count == 0)
-                    return validation;//if zero return immediate
+                {
+                    return;//if zero return immediate
+                }
 
                 List<Beperking> beperkingList = new List<Beperking>();
                 //load list form MS
@@ -316,7 +512,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     Results = resultList.SelectMany(item => item.Results).ToArray(),
                 };// String.Format("Controle op element 'beperkingGebruik' is {0}. {1}", item.IsSuccess.HasValue && item.IsSuccess.Value ? "succesvol" : "niet succesvol"
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Logger.LogError(e, String.Format("Exception occured in metadata validation with request '{0}' for metadata file '{1}'!", url, file));
                 errorMessages.Clear();
@@ -331,7 +527,13 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     Results = errorMessages.ToArray(),
                 };
             }
-            return validation;
+            finally
+            {
+                schemaResult.IsConfirmBegrippenLijst = validation.IsSuccess;
+                List<String> messages = schemaResult.ErrorMessages.ToList();                
+                messages.AddRange(validation.Results);
+                schemaResult.ErrorMessages = messages.ToArray();
+            }
         }
 
         internal enum BeperkingCategorie

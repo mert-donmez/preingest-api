@@ -661,5 +661,76 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             _logger.LogInformation("Exit DetectPasswordProtection.");
             return new JsonResult(new { Message = String.Format("Detect files with password protection is started."), SessionId = guid, ActionId = processId });
         }
+
+        [HttpPost("pronom/{guid}", Name = "Update metadata (bestand) files with PRONOM values", Order = 18)]
+        public IActionResult UpdateWithPronom(Guid guid)
+        {
+            if (guid == Guid.Empty)
+                return Problem("Empty GUID is invalid.");
+
+            _logger.LogInformation("Enter UpdateWithPronom.");
+
+            //database process id
+            Guid processId = Guid.NewGuid();
+            try
+            {
+                Task.Run(() =>
+                {
+                    using (BinaryFileMetadataMutationHandler handler = new BinaryFileMetadataMutationHandler(_settings, _eventHub, _preingestCollection))
+                    {
+                        handler.Logger = _logger;
+                        handler.SetSessionGuid(guid);
+                        processId = handler.AddProcessAction(processId, typeof(BinaryFileMetadataMutationHandler).Name, String.Format("Update metadata (bestand) files with PRONOM values in folder {0}", guid), String.Concat(typeof(BinaryFileMetadataMutationHandler).Name, ".json"));
+
+                        _logger.LogInformation("Execute handler ({0}) with GUID {1}.", typeof(BinaryFileMetadataMutationHandler).Name, guid.ToString());
+                        handler.Execute();
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An exception was thrown in {0}: '{1}'.", typeof(BinaryFileMetadataMutationHandler).Name, e.Message);
+                return ValidationProblem(e.Message, typeof(BinaryFileMetadataMutationHandler).Name);
+            }
+
+            _logger.LogInformation("Exit UpdateWithPronom.");
+            return new JsonResult(new { Message = String.Format("Update metadata (bestand) files with PRONOM values is started."), SessionId = guid, ActionId = processId });
+        }
+
+        [HttpPost("binaries/{guid}", Name = "Validate non-metadata files looking for ZBF and mismatch (PRONOM)", Order = 19)]
+        public IActionResult ValidateBinaries(Guid guid)
+        {
+            if (guid == Guid.Empty)
+                return Problem("Empty GUID is invalid.");
+
+            _logger.LogInformation("Enter ValidateBinaries.");
+
+            //database process id
+            Guid processId = Guid.NewGuid();
+            try
+            {
+                Task.Run(() =>
+                {
+                    using (BinaryFileObjectValidationHandler handler = new BinaryFileObjectValidationHandler(_settings, _eventHub, _preingestCollection))
+                    {
+                        handler.Logger = _logger;
+                        handler.SetSessionGuid(guid);
+                        processId = handler.AddProcessAction(processId, typeof(BinaryFileObjectValidationHandler).Name, String.Format("Validation for non-metadata files looking for ZBF and mismatch (PRONOM) in folder {0}", guid), String.Concat(typeof(BinaryFileObjectValidationHandler).Name, ".json"));
+
+                        _logger.LogInformation("Execute handler ({0}) with GUID {1}.", typeof(BinaryFileObjectValidationHandler).Name, guid.ToString());
+                        handler.Execute();
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An exception was thrown in {0}: '{1}'.", typeof(BinaryFileObjectValidationHandler).Name, e.Message);
+                return ValidationProblem(e.Message, typeof(BinaryFileObjectValidationHandler).Name);
+            }
+
+            _logger.LogInformation("Exit ValidateBinaries.");
+            return new JsonResult(new { Message = String.Format("Validation for non-metadata files looking for ZBF and mismatch (PRONOM) is started."), SessionId = guid, ActionId = processId });
+        }
+
     }
 }

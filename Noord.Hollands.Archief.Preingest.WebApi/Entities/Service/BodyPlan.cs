@@ -35,7 +35,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Service
         ToPX2MDTOHandler,
         PronomPropsHandler,
         RelationshipHandler,
-        FixityPropsHandler
+        FixityPropsHandler,
+        BinaryFileObjectValidationHandler,
+        BinaryFileMetadataMutationHandler
     }
 
 

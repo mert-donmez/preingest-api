@@ -194,6 +194,18 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             content.Add(String.Format("P{0} - Relaties", i.ToString("D2")), table);
                         }
                         break;
+                    case ValidationActionType.BinaryFileObjectValidationHandler:
+                        {
+                            DataTable table = LoadJson<BinaryFileObjectValidationHandler.ActionDataItem>(action.Name, jsonDataFile);
+                            content.Add(String.Format("P{0} - Bestanden", i.ToString("D2")), table);
+                        }
+                        break;
+                    case ValidationActionType.BinaryFileMetadataMutationHandler:
+                        {
+                            DataTable table = LoadJson<BinaryFileMetadataMutationHandler.ActionDataItem>(action.Name, jsonDataFile);
+                            content.Add(String.Format("P{0} - Mutaties", i.ToString("D2")), table);
+                        }
+                        break;
                     default:
                         { }
                         break;
