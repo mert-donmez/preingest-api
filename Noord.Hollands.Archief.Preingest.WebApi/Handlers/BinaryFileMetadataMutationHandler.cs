@@ -209,7 +209,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                         if (!File.Exists(metadata))
                                             throw new FileNotFoundException(String.Format("Metadata bestand '{0}' niet gevonden voor binaire bestand '{1}'", metadata, droidFileItem.Location));
 
-                                        Entities.ToPX.v2_3_2.topxType topx = DeserializerHelper.DeSerializeObject<Entities.ToPX.v2_3_2.topxType>(File.ReadAllText(droidFileItem.Location));
+                                        Entities.ToPX.v2_3_2.topxType topx = DeserializerHelper.DeSerializeObject<Entities.ToPX.v2_3_2.topxType>(File.ReadAllText(metadata));
                                         UpdateToPX(topx, fileInfo, droidFileItem);
                                         SerializerHelper.SerializeObjectToXmlFile<Entities.ToPX.v2_3_2.topxType>(topx, metadata);
 

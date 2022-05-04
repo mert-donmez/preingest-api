@@ -222,7 +222,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     DateTime parseOut = DateTime.MinValue;
                     DateTime.TryParse(termijnEinddatum, out parseOut);
 
-                    DateTime? dtTermijnStartdatumLooptijd = termijnStartdatumLooptijd;
+                    DateTime? dtTermijnStartdatumLooptijd = (termijnStartdatumLooptijd.Value == DateTime.MinValue) ? null : termijnStartdatumLooptijd.Value;
                     TimeSpan? tsTermijnLooptijd = String.IsNullOrEmpty(termijnLooptijd) ? null : XmlConvert.ToTimeSpan(termijnLooptijd);
                     DateTime? dtTermijnEinddatum = String.IsNullOrEmpty(termijnEinddatum) ? null : parseOut;
 
@@ -231,21 +231,14 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         //calculeren
                         var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                         DateTime isdtTermijnStartdatumLooptijd = dtTermijnStartdatumLooptijd.Value.Add(tsTermijnLooptijd.Value);
-                        int result = DateTime.Compare(dtTermijnStartdatumLooptijd.Value, isdtTermijnStartdatumLooptijd);
+                        int result = DateTime.Compare(dtTermijnEinddatum.Value, isdtTermijnStartdatumLooptijd);
 
                         if (result < 0)
-                            currentErrorMessages.Add("Meldig: termijnEinddatum is eerder dan (termijnStartdatum + termijnLooptijd)"); //relationship = "is eerder dan";
+                            currentErrorMessages.Add("Meldig: termijnEinddatum is eerder dan (termijnStartdatumLooptijd + termijnLooptijd)"); //relationship = "is eerder dan";
                         else if (result == 0)
-                            currentErrorMessages.Add("Meldig: termijnEinddatum is gelijk (termijnStartdatum + termijnLooptijd)");//relationship = "is gelijk aan";
+                            currentErrorMessages.Add("Meldig: termijnEinddatum is gelijk (termijnStartdatumLooptijd + termijnLooptijd)");//relationship = "is gelijk aan";
                         else
-                            currentErrorMessages.Add("Meldig: termijnEinddatum is later dan (termijnStartdatum + termijnLooptijd)");  //relationship = "is later dan";
-                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
-                    }
-                    if (dtTermijnStartdatumLooptijd.HasValue && tsTermijnLooptijd.HasValue && !dtTermijnEinddatum.HasValue)
-                    {
-                        //Melding: 'termijnEinddatum' heeft geen waarde, maar 'termijnStartdatum' en 'termijnLooptijd' hebben geldige waarden.
-                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
-                        currentErrorMessages.Add("Melding: 'termijnEinddatum' heeft geen waarde, maar 'termijnStartdatum' en 'termijnLooptijd' hebben geldige waarden");
+                            currentErrorMessages.Add("Meldig: termijnEinddatum is later dan (termijnStartdatumLooptijd + termijnLooptijd)");  //relationship = "is later dan";
                         schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                     }
                     if (dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && dtTermijnEinddatum.HasValue)
@@ -263,13 +256,13 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         int result = DateTime.Compare(dtTermijnStartdatumLooptijd.Value, dtTermijnEinddatum.Value);
 
                         if (result < 0)
-                            currentErrorMessages.Add("Meldig: termijnStartdatum is eerder dan termijnEinddatum"); //relationship = "is eerder dan";
+                            currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is eerder dan termijnEinddatum"); //relationship = "is eerder dan";
                         else if (result == 0)
-                            currentErrorMessages.Add("Meldig: termijnStartdatum is gelijk termijnEinddatum");//relationship = "is gelijk aan";
+                            currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is gelijk termijnEinddatum");//relationship = "is gelijk aan";
                         else
-                            currentErrorMessages.Add("Meldig: termijnStartdatum is later dan termijnEinddatum");  //relationship = "is later dan";
+                            currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is later dan termijnEinddatum");  //relationship = "is later dan";
                          
-                        currentErrorMessages.Add("Melding: er is geen waarde opgegeven voor het element 'termijnLooptijd',  er is wel een 'termijnStartdatum' en 'termijnEinddatum'");
+                        currentErrorMessages.Add("Melding: er is geen waarde opgegeven voor het element 'termijnLooptijd',  er is wel een 'termijnStartdatumLooptijd' en 'termijnEinddatum'");
                         schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                     }
                     if (!dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && dtTermijnEinddatum.HasValue)
@@ -280,8 +273,19 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     {
                         //Melding: de elementen 'termijnStartdatum en 'termijnEinddatum' ontbreken, er is wel een 'termijnLooptijd'
                         var currentErrorMessages = schemaResult.ErrorMessages.ToList();
-                        currentErrorMessages.Add("Melding: de elementen 'termijnStartdatum en 'termijnEinddatum' ontbreken, er is wel een 'termijnLooptijd'");
+                        currentErrorMessages.Add("Melding: de elementen 'termijnStartdatumLooptijd' en 'termijnEinddatum' ontbreken, er is wel een 'termijnLooptijd'");
                         schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
+                    if (dtTermijnStartdatumLooptijd.HasValue && tsTermijnLooptijd.HasValue && !dtTermijnEinddatum.HasValue)
+                    {
+                        //Melding: 'termijnEinddatum' heeft geen waarde, maar 'termijnStartdatum' en 'termijnLooptijd' hebben geldige waarden.
+                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                        currentErrorMessages.Add("Melding: 'termijnEinddatum' heeft geen waarde, maar 'termijnStartdatumLooptijd' en 'termijnLooptijd' hebben geldige waarden");
+                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
+                    if (!dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && dtTermijnEinddatum.HasValue)
+                    {
+                        return;
                     }
                     if (!dtTermijnStartdatumLooptijd.HasValue && !tsTermijnLooptijd.HasValue && !dtTermijnEinddatum.HasValue)
                     {

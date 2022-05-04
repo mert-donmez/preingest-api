@@ -97,7 +97,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
                 xmlDocument.Save(tempFileName);
                 stream.Close();
             }
-            System.IO.File.Move(tempFileName, fileName);
+            System.IO.File.Move(tempFileName, fileName, true);
         }
 
         /// <summary>
