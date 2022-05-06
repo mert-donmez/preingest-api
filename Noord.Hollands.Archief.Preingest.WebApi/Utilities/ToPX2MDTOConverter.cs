@@ -183,6 +183,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
                 this.Activiteit();
                 this.BeperkingGebruik();
                 this.EventResultaat();
+                this.Vorm();
+                this.Integriteit();
             }
             if (IsBestand)
             {
@@ -240,7 +242,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
 
             MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
             infObjType.aggregatieniveau = new MDTO.begripGegevens();
-            infObjType.aggregatieniveau.begripCode = topxObjectType.aggregatieniveau.Value.ToString().Equals("Record", StringComparison.InvariantCultureIgnoreCase) ? "Archiefstuk" : topxObjectType.aggregatieniveau.Value.ToString();
+            //optioneel, in overleg 03-05-2022 besloten
+            //infObjType.aggregatieniveau.begripCode = topxObjectType.aggregatieniveau.Value.ToString().Equals("Record", StringComparison.InvariantCultureIgnoreCase) ? "Archiefstuk" : topxObjectType.aggregatieniveau.Value.ToString();
             infObjType.aggregatieniveau.begripLabel = topxObjectType.aggregatieniveau.Value.ToString().Equals("Record", StringComparison.InvariantCultureIgnoreCase) ? "Archiefstuk" : topxObjectType.aggregatieniveau.Value.ToString();
             infObjType.aggregatieniveau.begripBegrippenlijst = new MDTO.verwijzingGegevens();
             infObjType.aggregatieniveau.begripBegrippenlijst.verwijzingNaam = "MDTO begrippenlijsten versie 1.0";
@@ -252,13 +255,17 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
             if (topxObjectType.classificatie != null)
             {
                 MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
-                infObjType.classificatie = topxObjectType.classificatie.Select(item => new MDTO.begripGegevens { begripCode = item.code.Value, begripLabel = null, begripBegrippenlijst = new MDTO.verwijzingGegevens() { verwijzingNaam = item.bron.Value, verwijzingIdentificatie = null } }).ToArray();
-            }
-            if(topxObjectType.vorm != null)
-            {   //Deze is vaag, alle props in vorm zijn NVT in de mapping sheet. Dan wat wel meenemen???
-                //MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
-                //if (topxObjectType.vorm.verschijningsvorm != null)
-                    //infObjType.classificatie.Concat(topxObjectType.vorm.verschijningsvorm.Select(item => new MDTO.begripGegevens { begripCode = item.Value, begripLabel = null, begripBegrippenlijst = new MDTO.verwijzingGegevens() { verwijzingNaam = "MDTO begrippenlijsten versie 1.0", verwijzingIdentificatie = null } }).ToArray());
+                infObjType.classificatie = topxObjectType.classificatie.Select(item => new MDTO.begripGegevens
+                {
+                    begripCode = null,
+                    begripLabel = item.code.Value,
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens()
+                    {
+                        verwijzingNaam = item.bron.Value,
+                        verwijzingIdentificatie = null
+                    }
+                }
+               ).ToArray();
             }
         }
         private void Omschrijving()
@@ -327,7 +334,19 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
                 return;
 
             MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
-            infObjType.@event = topxObjectType.eventGeschiedenis.Select(item => new MDTO.eventGegevens { eventResultaat = item.type.Value, eventTijd = CustomDateTimeParse(item.datumOfPeriode.Item).ToString("yyyy-MM-ddTHH:mm:ss"), eventType = new MDTO.begripGegevens { begripLabel = item.verantwoordelijkeFunctionaris.Value, begripCode = null, begripBegrippenlijst = new MDTO.verwijzingGegevens { verwijzingNaam = "MDTO begrippenlijsten versie 1.0", verwijzingIdentificatie = null } } }).ToArray();
+            infObjType.@event = topxObjectType.eventGeschiedenis.Select(item => new MDTO.eventGegevens
+            {
+                //eventResultaat = ""
+                eventVerantwoordelijkeActor = new MDTO.verwijzingGegevens { verwijzingNaam = item.verantwoordelijkeFunctionaris.Value, verwijzingIdentificatie = null },
+                eventTijd = CustomDateTimeParse(item.datumOfPeriode.Item).ToString("yyyy-MM-ddTHH:mm:ss"),
+                eventType = new MDTO.begripGegevens
+                {
+                    begripLabel = item.type1,
+                    begripCode = item.beschrijving == null ? null : item.beschrijving.Value,
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens { verwijzingNaam = "MDTO begrippenlijsten versie 1.0", verwijzingIdentificatie = null }
+                }
+            }
+            ).ToArray();
         } 
         private void BewaartTermijn()
         {
@@ -350,7 +369,25 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
                 return;
 
             MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
-            infObjType.gerelateerdInformatieobject = topxObjectType.relatie.Select(item => new MDTO.gerelateerdInformatieobjectGegevens { gerelateerdInformatieobjectTypeRelatie = new MDTO.begripGegevens { begripLabel = item.typeRelatie.Value, begripCode = null, begripBegrippenlijst = new MDTO.verwijzingGegevens { verwijzingNaam = "MDTO begrippenlijsten versie 1.0", verwijzingIdentificatie = null } }, gerelateerdInformatieobjectVerwijzing = new MDTO.verwijzingGegevens { verwijzingNaam = item.relatieID.Value, verwijzingIdentificatie = null } }).ToArray();
+            infObjType.gerelateerdInformatieobject = topxObjectType.relatie.Select(item => new MDTO.gerelateerdInformatieobjectGegevens
+            {
+                gerelateerdInformatieobjectTypeRelatie = new MDTO.begripGegevens
+                {
+                    begripLabel = item.typeRelatie.Value,
+                    begripCode = item.datumOfPeriode == null ? null : item.datumOfPeriode.Item.ToString(),
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens
+                    {
+                        verwijzingNaam = "MDTO begrippenlijsten versie 1.0",
+                        verwijzingIdentificatie = null
+                    }
+                },
+                gerelateerdInformatieobjectVerwijzing = new MDTO.verwijzingGegevens
+                {
+                    verwijzingNaam = item.relatieID.Value,
+                    verwijzingIdentificatie = null
+                }
+            }
+            ).ToArray();
         }
 
         private void ArchiefVormer()
@@ -450,6 +487,79 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
             {
                 infObjType.bestandsformaat = begripGegevens;
             }
+        }
+
+        private void Vorm()
+        {
+            ToPX.aggregatieType topxObjectType = (CurrentToPX.Item as ToPX.aggregatieType);
+            if (topxObjectType.vorm == null)
+                return;
+
+            ToPX.@string redactieGenre = topxObjectType.vorm.redactieGenre;
+            ToPX.@string structuur = topxObjectType.vorm.structuur;
+            ToPX.@string[] verschijningsvormen = topxObjectType.vorm.verschijningsvorm;
+
+            MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
+            List<MDTO.begripGegevens> currentClassificatieList = new List<MDTO.begripGegevens>();
+
+            if (infObjType.classificatie != null)            
+                currentClassificatieList.AddRange(infObjType.classificatie);
+
+            if (redactieGenre != null && !String.IsNullOrEmpty(redactieGenre.Value))
+                currentClassificatieList.Add(new MDTO.begripGegevens
+                {
+                    begripLabel = redactieGenre.Value,
+                    begripCode = null,
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens
+                    {
+                        verwijzingNaam = "Vorm / redactie genre",
+                        verwijzingIdentificatie = null
+                    }
+                });
+
+            if(structuur != null && !String.IsNullOrEmpty(structuur.Value))
+                currentClassificatieList.Add(new MDTO.begripGegevens
+                {
+                    begripLabel = structuur.Value,
+                    begripCode = null,
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens
+                    {
+                        verwijzingNaam = "Vorm / structuur",
+                        verwijzingIdentificatie = null
+                    }
+                });
+
+            if(verschijningsvormen != null && verschijningsvormen.Length > 0)
+                currentClassificatieList.Add(new MDTO.begripGegevens
+                {
+                    begripLabel = String.Join(" / ", verschijningsvormen.Select(item => item.Value).ToArray()),
+                    begripCode = null,
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens
+                    {
+                        verwijzingNaam = "Vorm / verschijningsvorm",
+                        verwijzingIdentificatie = null
+                    }
+                });
+
+            infObjType.classificatie = currentClassificatieList.ToArray();
+        }
+
+        private void Integriteit()
+        {
+            ToPX.aggregatieType topxObjectType = (CurrentToPX.Item as ToPX.aggregatieType);
+            if (topxObjectType.integriteit == null)
+                return;
+
+            MDTO.informatieobjectType infObjType = (CurrentMDTO.Item as MDTO.informatieobjectType);
+            infObjType.@event = topxObjectType.eventGeschiedenis.Select(item => new MDTO.eventGegevens
+            {                
+                eventType = new MDTO.begripGegevens
+                {
+                    begripLabel = topxObjectType.integriteit.Value,
+                    begripBegrippenlijst = new MDTO.verwijzingGegevens { verwijzingNaam = "Integriteit", verwijzingIdentificatie = null }
+                }
+            }
+            ).ToArray();
         }
 
         private void Checksum(MDTO.checksumGegevens[] checksumGegevens = null)
