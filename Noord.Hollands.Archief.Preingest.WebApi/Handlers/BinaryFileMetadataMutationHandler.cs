@@ -149,7 +149,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             Puid = item.PUID,
                             IsExtensionMismatch = Boolean.Parse(item.EXTENSION_MISMATCH)
                         }).ToList() :
-                        records.Where(item => item.TYPE == "File" && !item.NAME.EndsWith("bestand.mdto.xml")).Select(item => new DataItem
+                        records.Where(item => item.TYPE == "File" && !item.NAME.EndsWith(".mdto.xml")).Select(item => new DataItem
                         {
                             Location = item.FILE_PATH,
                             Name = item.NAME,
@@ -243,30 +243,49 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
             if (droidItem != null && !String.IsNullOrEmpty(droidItem.Puid))
             {
-                bestand.formaat = new Entities.ToPX.v2_3_2.formaatType[]
+                if (bestand.formaat == null || bestand.formaat.Count() == 0)
                 {
-                    new Entities.ToPX.v2_3_2.formaatType
+                    bestand.formaat = new Entities.ToPX.v2_3_2.formaatType[]
                     {
-                        identificatiekenmerk = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = droidItem.Puid },
-                        bestandsnaam = new Entities.ToPX.v2_3_2.bestandsnaamType {
-                            naam =  new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = binaryFile.Name },
-                            extensie = new Entities.ToPX.v2_3_2.@string { Value = droidItem.Extension }
+                        new Entities.ToPX.v2_3_2.formaatType
+                        {
+                            identificatiekenmerk = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = droidItem.MimeType },
+                            bestandsnaam = new Entities.ToPX.v2_3_2.bestandsnaamType 
+                            {
+                                naam =  new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = binaryFile.Name },
+                                extensie = new Entities.ToPX.v2_3_2.@string { Value = droidItem.Extension }
                             },
-                         type = new Entities.ToPX.v2_3_2.@string { Value = "digitaal" },
-                         omvang = new Entities.ToPX.v2_3_2.formaatTypeOmvang { Value = binaryFile.Length.ToString() },
+                            type = new Entities.ToPX.v2_3_2.@string { Value = "digitaal" },
+                            omvang = new Entities.ToPX.v2_3_2.formaatTypeOmvang { Value = binaryFile.Length.ToString() },
+                            bestandsformaat = new Entities.ToPX.v2_3_2.@string { Value = droidItem.Puid },
+                            creatieapplicatie = new Entities.ToPX.v2_3_2.creatieApplicatieType
+                            {
+                                naam = new Entities.ToPX.v2_3_2.@string { Value = droidItem.FormatName },
+                                datumAanmaak = new Entities.ToPX.v2_3_2.creatieApplicatieTypeDatumAanmaak{ Value = binaryFile.CreationTime.ToString("yyyy-MM-ddThh:mm:ss") },
+                                versie = new Entities.ToPX.v2_3_2.@string { Value = droidItem.FormatVersion} 
+                            },
+                            fysiekeIntegriteit = new Entities.ToPX.v2_3_2.fysiekeIntegriteitType 
+                            {
+                                algoritme = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = "SHA-256" },
+                                datumEnTijd = new Entities.ToPX.v2_3_2.fysiekeIntegriteitTypeDatumEnTijd { Value = DateTime.Now },
+                                waarde = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = waarde }
+                            }
+                        }
+                    };
+                    return;//create, new
+                }
 
-                         bestandsformaat = new Entities.ToPX.v2_3_2.@string { Value = droidItem.MimeType },
-                         creatieapplicatie = new Entities.ToPX.v2_3_2.creatieApplicatieType{
-                             naam = new Entities.ToPX.v2_3_2.@string { Value = droidItem.FormatName },
-                             datumAanmaak = new Entities.ToPX.v2_3_2.creatieApplicatieTypeDatumAanmaak{ Value = binaryFile.CreationTime.ToString("yyyy-MM-ddThh:mm:ss") },
-                             versie = new Entities.ToPX.v2_3_2.@string { Value = droidItem.FormatVersion} },
-                         fysiekeIntegriteit = new Entities.ToPX.v2_3_2.fysiekeIntegriteitType {
-                             algoritme = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = "SHA-256" },
-                             datumEnTijd = new Entities.ToPX.v2_3_2.fysiekeIntegriteitTypeDatumEnTijd { Value = DateTime.Now },
-                             waarde = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = waarde }
-                           }
-                    }
-                };
+                for (int i=0,l=bestand.formaat.Length; i<l; i++)
+                {
+                    //if formaat elements exitst only update bestadnsformaat en fysiekeIntegriteit.
+                    bestand.formaat[i].bestandsformaat = new Entities.ToPX.v2_3_2.@string { Value = droidItem.Puid };
+                    bestand.formaat[i].fysiekeIntegriteit = new Entities.ToPX.v2_3_2.fysiekeIntegriteitType
+                    {
+                        algoritme = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = "SHA-256" },
+                        datumEnTijd = new Entities.ToPX.v2_3_2.fysiekeIntegriteitTypeDatumEnTijd { Value = DateTime.Now },
+                        waarde = new Entities.ToPX.v2_3_2.nonEmptyStringTypeAttribuut { Value = waarde }
+                    };                    
+                }                
             }
             else
             {
@@ -333,7 +352,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     begripCode = droidItem.Puid,
                     begripBegrippenlijst = new Entities.MDTO.v1_0.verwijzingGegevens
                     {
-                        verwijzingNaam = "the technical register PRONOM",
+                        verwijzingNaam = "PRONOM-register",
                         verwijzingIdentificatie = new Entities.MDTO.v1_0.identificatieGegevens
                         {
                             identificatieBron = "https://www.nationalarchives.gov.uk/PRONOM/Default.aspx",
@@ -350,7 +369,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     begripCode = "voor dit element wordt geen waarde geregistreerd",
                     begripBegrippenlijst = new Entities.MDTO.v1_0.verwijzingGegevens
                     {
-                        verwijzingNaam = "the technical register PRONOM",
+                        verwijzingNaam = "PRONOM-register",
                         verwijzingIdentificatie = new Entities.MDTO.v1_0.identificatieGegevens
                         {
                             identificatieBron = "https://www.nationalarchives.gov.uk/PRONOM/Default.aspx",

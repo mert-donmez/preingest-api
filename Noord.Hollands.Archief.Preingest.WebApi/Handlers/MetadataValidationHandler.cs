@@ -256,11 +256,18 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         int result = DateTime.Compare(dtTermijnStartdatumLooptijd.Value, dtTermijnEinddatum.Value);
 
                         if (result < 0)
-                            currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is eerder dan termijnEinddatum"); //relationship = "is eerder dan";
+                        {                            
+                            //Uitgeschakeld bevinding #4 uit test 10-05-2022 op verzoek van Mark. 
+                            //currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is eerder dan termijnEinddatum"); //relationship = "is eerder dan";
+                        }
                         else if (result == 0)
+                        {
                             currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is gelijk termijnEinddatum");//relationship = "is gelijk aan";
+                        }
                         else
+                        {
                             currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is later dan termijnEinddatum");  //relationship = "is later dan";
+                        }
                          
                         currentErrorMessages.Add("Melding: er is geen waarde opgegeven voor het element 'termijnLooptijd',  er is wel een 'termijnStartdatumLooptijd' en 'termijnEinddatum'");
                         schemaResult.ErrorMessages = currentErrorMessages.ToArray();
