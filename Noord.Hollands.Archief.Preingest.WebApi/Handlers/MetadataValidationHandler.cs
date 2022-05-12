@@ -1,26 +1,24 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
-
 using Newtonsoft.Json;
 
 using System;
+using System.Text;
 using System.IO;
+using System.Xml;
 using System.Linq;
+using System.Threading;
+using System.Xml.Linq;
 using System.Net.Http;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 using Noord.Hollands.Archief.Preingest.WebApi.Entities;
 using Noord.Hollands.Archief.Preingest.WebApi.EventHub;
+using Noord.Hollands.Archief.Preingest.WebApi.Utilities;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Event;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Handler;
-using System.Threading;
-using System.Xml.Linq;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
-using System.Text;
-using Noord.Hollands.Archief.Preingest.WebApi.Utilities;
-using System.Reflection;
-using System.Xml;
+
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -158,14 +156,22 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 XmlNodeList xNodeList = this.IsToPX ? xml.SelectNodes("/t:ToPX//*/text()", nsmgr) : xml.SelectNodes("/m:MDTO//*/text()", nsmgr);
                 foreach (XmlNode xNode in xNodeList)
                 {
+                    //private bool CheckValidChars(List<string> inputList) => !inputList.Any(s => s.Any(c => char.IsControl(c)));
                     string text = xNode.InnerText;
                     string name = xNode.ParentNode.Name;
                     //check if start with non-printable characters - first 128 ASCII characters
-                    Match match = Regex.Match(text, @"[^\x20-\x7E]+", RegexOptions.Multiline);
-                    if (match.Success)
+                    //Match match = Regex.Match(text, @"[^\x20-\x7E]+", RegexOptions.Multiline);
+                    //if (match.Success)
+                    //{
+                    //    var findings = schemaResult.ErrorMessages.ToList();
+                    //    findings.Add(String.Format("Non-printable karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
+                    //    schemaResult.ErrorMessages = findings.ToArray();
+                    //}
+                    bool anyControlCharInText = text.Any(s => char.IsControl(s));
+                    if (anyControlCharInText)
                     {
                         var findings = schemaResult.ErrorMessages.ToList();
-                        findings.Add(String.Format("Non-printable karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
+                        findings.Add(String.Format("Melding: Non-printable karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
                         schemaResult.ErrorMessages = findings.ToArray();
                     }
                 }
@@ -219,8 +225,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     string termijnLooptijd = item.beperkingGebruikTermijn.termijnLooptijd;
                     string termijnEinddatum = item.beperkingGebruikTermijn.termijnEinddatum;
 
-                    DateTime parseOut = DateTime.MinValue;
-                    DateTime.TryParse(termijnEinddatum, out parseOut);
+                    DateTime? parseOut = ParseTermijnEinddatum(termijnEinddatum); 
 
                     DateTime? dtTermijnStartdatumLooptijd = (termijnStartdatumLooptijd.Value == DateTime.MinValue) ? null : termijnStartdatumLooptijd.Value;
                     TimeSpan? tsTermijnLooptijd = String.IsNullOrEmpty(termijnLooptijd) ? null : XmlConvert.ToTimeSpan(termijnLooptijd);
@@ -315,6 +320,44 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 //error
                 schemaResult.ErrorMessages.ToArray();
             }
+        }
+
+        private DateTime? ParseTermijnEinddatum(String termijnEinddatum)
+        { 
+            // xsd:gYear
+            // xsd:gYearMonth
+            // xsd:date
+            DateTime parseOut = DateTime.MinValue;
+            bool isSuccess = DateTime.TryParse(termijnEinddatum, out parseOut);
+            if (isSuccess)
+                return parseOut;
+
+            string yearFormat = @"\d{4}";
+            string yeahMonthFormat = @"\d{4}-\d{2}";
+
+            bool isYear = Regex.IsMatch(termijnEinddatum, yearFormat);
+            bool isYearMonth = Regex.IsMatch(termijnEinddatum, yeahMonthFormat);
+
+            if (isYear)
+            {
+                int year = Int32.Parse(termijnEinddatum);
+                int lastDay = DateTime.DaysInMonth(year, 12);
+                DateTime yearOnly = new DateTime(year, 12, lastDay);//max it out in a year;
+                return yearOnly;
+            }
+
+            if (isYearMonth)
+            {
+                var splitResultList = termijnEinddatum.Split("-", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                int year = Int32.Parse(splitResultList.First());
+                int month = Int32.Parse(splitResultList.Last());
+                int lastDay = DateTime.DaysInMonth(year, month);
+
+                DateTime yearOnly = new DateTime(year, month, lastDay);//max it out in a year/month;
+                return yearOnly;
+            }
+
+            return null;
         }
 
         /// <summary>
