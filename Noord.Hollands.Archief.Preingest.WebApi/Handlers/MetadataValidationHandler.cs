@@ -153,26 +153,28 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 if(this.IsToPX)
                     nsmgr.AddNamespace("t", "http://www.nationaalarchief.nl/ToPX/v2.3");
 
-                XmlNodeList xNodeList = this.IsToPX ? xml.SelectNodes("/t:ToPX//*/text()", nsmgr) : xml.SelectNodes("/m:MDTO//*/text()", nsmgr);
+                //XmlNodeList xNodeList = this.IsToPX ? xml.SelectNodes("/t:ToPX//*/text()", nsmgr) : xml.SelectNodes("/m:MDTO//*/text()", nsmgr);
+                XmlNodeList xNodeList = this.IsToPX ? xml.SelectNodes("/t:ToPX//*[not(.//text()[normalize-space()])]", nsmgr) : xml.SelectNodes("/m:MDTO//*[not(.//text()[normalize-space()])]", nsmgr);
                 foreach (XmlNode xNode in xNodeList)
                 {
-                    //private bool CheckValidChars(List<string> inputList) => !inputList.Any(s => s.Any(c => char.IsControl(c)));
                     string text = xNode.InnerText;
-                    string name = xNode.ParentNode.Name;
-                    //check if start with non-printable characters - first 128 ASCII characters
-                    //Match match = Regex.Match(text, @"[^\x20-\x7E]+", RegexOptions.Multiline);
-                    //if (match.Success)
-                    //{
-                    //    var findings = schemaResult.ErrorMessages.ToList();
-                    //    findings.Add(String.Format("Non-printable karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
-                    //    schemaResult.ErrorMessages = findings.ToArray();
-                    //}
-                    bool anyControlCharInText = text.Any(s => char.IsControl(s));
-                    if (anyControlCharInText)
+                    string name = xNode.Name;
+
+                    if (String.IsNullOrEmpty(text))
                     {
                         var findings = schemaResult.ErrorMessages.ToList();
-                        findings.Add(String.Format("Melding: control karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
+                        findings.Add(String.Format("Melding: Lege element gevonden, element: {0} | text: {1}", name, text));
                         schemaResult.ErrorMessages = findings.ToArray();
+                    }
+                    else
+                    {
+                        bool anyControlCharInText = text.Any(s => char.IsControl(s));
+                        if (anyControlCharInText)
+                        {
+                            var findings = schemaResult.ErrorMessages.ToList();
+                            findings.Add(String.Format("Melding: control karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
+                            schemaResult.ErrorMessages = findings.ToArray();
+                        }
                     }
                 }
             }
