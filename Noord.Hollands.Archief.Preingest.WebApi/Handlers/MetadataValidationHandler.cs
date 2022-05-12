@@ -171,7 +171,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     if (anyControlCharInText)
                     {
                         var findings = schemaResult.ErrorMessages.ToList();
-                        findings.Add(String.Format("Melding: Non-printable karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
+                        findings.Add(String.Format("Melding: control karakter(s) in de tekst gevonden, element: {0} | text: {1}", name, text));
                         schemaResult.ErrorMessages = findings.ToArray();
                     }
                 }
