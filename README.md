@@ -1,4 +1,4 @@
-# Noord-Hollands Archief pre-ingest API
+# Pre-ingest API
 
 Een .NET (Core) gebaseerde REST API service met het doel om diverse controle & validatie acties uit te voeren om de kwaliteit van de aangeleverde collecties te bepalen. 
 
