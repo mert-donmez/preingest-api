@@ -3,14 +3,14 @@
 Een .NET (Core) gebaseerde REST API service met het doel om diverse controle & validatie acties uit te voeren om de kwaliteit van de aangeleverde collecties te beoordelen.
 
 ## Controllers
-De Preingest REST API bestaat uit 6 contollers. Elk controller heeft één of meerdere acties om uit te voeren. De controllers zijn:
+De preingest REST API bestaat uit 6 contollers. Elk controller heeft één of meerdere acties om uit te voeren. De controllers zijn:
 
-- Preingest
-- Output
-- Service
-- Status
-- Opex
-- ToPX naar MDTO
+- Preingest: Acties voor controlen, valideren en classificeren
+- Output: Raadplegen informatie en eigenschappen van de collecties 
+- Service: Automatisch werkschema opzetten, starten en/of annuleren
+- Status: Raadplegen en muteren van taken bij het uitvoeren een werkschema
+- Opex: Voorbewerking en omzetting t.b.v. ingest + raadplegen van de S3 bucket 
+- ToPX naar MDTO: Acties t.b.v omzetting van ToPX naar MDTO
 
 ### Preingest
 - CollectionChecksumCalculation: berekenen van een checksum waarde volgens een algoritme. Algoritme MD5, SHA1, SHA-256 en SHA512 wordt standaard via .NET uitgerekend. Voor SHA-224 en SHA-384 wordt de calculatie gedaan met behulp van [een onderliggende service](https://github.com/noord-hollandsarchief/preingest-mdto-utilities).
@@ -37,7 +37,7 @@ De Preingest REST API bestaat uit 6 contollers. Elk controller heeft één of me
 
 - ValidateMetadata: ToPX of MDTO metadata bestanden valideren volgens de XSD schema's en controleren op business regels volgens de NHA specificaties bijv. beperking gebruik, openbaarheid en auteurswet. De actie wordt (deels) gedaan m.b.v. [een onderliggende service](https://github.com/noord-hollandsarchief/preingest-xslweb).
 
-- CreateExcel: De Preingest resultaten van alle uitgevoerde acties ophalen, converteren en opslaan als een MS Excel bestand.
+- CreateExcel: De preingest resultaten van alle uitgevoerde acties ophalen, converteren en opslaan als een MS Excel bestand.
 
 - PutSettings: Instellingen opslaan van de tool.
 
@@ -52,13 +52,52 @@ De Preingest REST API bestaat uit 6 contollers. Elk controller heeft één of me
 - ValidateBinaries: Binaire bestanden binnen een collectie controleren en vergelijken met de classificatie resultaten. Deze actie vereist een resultaat van 'Exporting'.
 
 ### Output
+- GetCollections: De eigenschappen van alle collecties retourneren t.b.v front-end weergave.
+- GetCollection: De eigenschappen van een collectie retourneren t.b.v. front-end weergave.
+- GetJson: JSON resultaten retourneren van een uitgevoerd preingest actie.
+- GetReport: Indien bestaat/aanwezig, rapportage bestand ophalen. Uiteraard nadat een 'Reporting' actie is uitgevoerd.
+- GetStylesheetList: Ophalen van een lijst transformatie bestanden 
+- GetSchemaList: Ophalen van een lijst XSD schema bestanden
+- GetCollectionStructure: Mappen en bestanden structuur van een collectie ophalen 
+- GetCollectionItem: Ophalen van een binaire bestand 
+- GetCollectionItemProps: Ophalen van een metadata bestand
+
 ### Service
+- StartPlan: Starten van een samengestelde werkschema. Een werkschema bevat de gekozen actie(s). Starten mag meerdere keren uitgevoerd worden. Voorgaande werkschema wordt dan overschreven.
+- CancelPlan: Annuleren van een samengestelde werkschema.
+
 ### Status
+- GetAction: De eigenschappen ophalen van een actie 
+- GetActions: De eigenschappen ophalen van alle acties
+- AddProcessAction: Een actie toevoegen 
+- UpdateProcessAction: Een actie bijewerken
+- AddStartState: Bij een actie een start status meegeven 
+- AddCompletedState:
+- AddFailedState:
+- ResetSession:
+- RemoveSession:
+- SendNotification:
+- AddState:
+- DeleteSession:
+
 ### Opex
+- BuildOpex
+- ShowBucket
+- ClearBucket
+- Upload2Bucket
+- RunChecksum
+- Polish
+
 ### ToPX naar MDTO
+- Convert
+- UpdatePronum
+- UpdateFixity
+- UpdateRelationshipReferences
 
 ## OpenAPI (Swagger)
-Voor een volledige REST-API specificaties van de Preingest tool, start de service en ga naar http://[servername][port]/swagger/index.html.
+Voor een volledige REST-API specificaties van de preingest tool, start de service en ga naar http://[servername][port]/swagger/index.html.
+
+## Local database
 
 ## Configuraties
 
