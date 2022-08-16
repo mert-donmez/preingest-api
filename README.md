@@ -56,54 +56,113 @@ De preingest REST API bestaat uit 6 contollers. Elk controller heeft één of me
 - GetCollection: De eigenschappen van een collectie retourneren t.b.v. front-end weergave.
 - GetJson: JSON resultaten retourneren van een uitgevoerd preingest actie.
 - GetReport: Indien bestaat/aanwezig, rapportage bestand ophalen. Uiteraard nadat een 'Reporting' actie is uitgevoerd.
-- GetStylesheetList: Ophalen van een lijst transformatie bestanden 
-- GetSchemaList: Ophalen van een lijst XSD schema bestanden
-- GetCollectionStructure: Mappen en bestanden structuur van een collectie ophalen 
-- GetCollectionItem: Ophalen van een binaire bestand 
-- GetCollectionItemProps: Ophalen van een metadata bestand
+- GetStylesheetList: Ophalen van een lijst transformatie bestanden.
+- GetSchemaList: Ophalen van een lijst XSD schema bestanden.
+- GetCollectionStructure: Mappen en bestanden structuur van een collectie ophalen.
+- GetCollectionItem: Ophalen van een binaire bestand.
+- GetCollectionItemProps: Ophalen van een metadata bestand.
 
 ### Service
 - StartPlan: Starten van een samengestelde werkschema. Een werkschema bevat de gekozen actie(s). Starten mag meerdere keren uitgevoerd worden. Voorgaande werkschema wordt dan overschreven.
 - CancelPlan: Annuleren van een samengestelde werkschema.
 
 ### Status
-- GetAction: De eigenschappen ophalen van een actie 
-- GetActions: De eigenschappen ophalen van alle acties
-- AddProcessAction: Een actie toevoegen 
-- UpdateProcessAction: Een actie bijewerken
-- AddStartState: Bij een actie een start status meegeven 
-- AddCompletedState:
-- AddFailedState:
-- ResetSession:
-- RemoveSession:
-- SendNotification:
-- AddState:
-- DeleteSession:
+- GetAction: De eigenschappen ophalen van een actie. 
+- GetActions: De eigenschappen ophalen van alle acties.
+- AddProcessAction: Een actie toevoegen.
+- UpdateProcessAction: Een actie bijewerken.
+- AddStartState: Bij een actie een 'start' status meegeven.
+- AddCompletedState: Bij een actie een 'voltooid' status meegeven.
+- AddFailedState: Bij een actie een 'mislukte' status meegeven.
+- ResetSession: Bij een actie de status legen.
+- RemoveSession: Bij een actie alle voorgaande sessie informatie legen.
+- SendNotification: Een notificatie sturen via SignalR.
+- AddState: Een sessie informatie van een actie registreren.
+- DeleteSession: Een sessie informatie van een actie legen.
 
 ### Opex
-- BuildOpex
-- ShowBucket
-- ClearBucket
-- Upload2Bucket
-- RunChecksum
-- Polish
+- BuildOpex: Een collectie voorbereiden en omzetten naar OPEX constructie t.b.v ingest naar Preservica.
+- ShowBucket: Inhoud van S3 bucket opvragen. De actie wordt gedaan m.b.v. [een onderliggende service](https://github.com/noord-hollandsarchief/preingest-mdto-utilities). 
+- ClearBucket: Inhoud van de S3 bucket legen. De actie wordt gedaan m.b.v. [een onderliggende service](https://github.com/noord-hollandsarchief/preingest-mdto-utilities). 
+- Upload2Bucket: Collectie uploaden naar de S3 bucket. De actie wordt gedaan m.b.v. [een onderliggende service](https://github.com/noord-hollandsarchief/preingest-mdto-utilities). 
+- RunChecksum: Checksum waarden controleren in de metadata bestanden. De actie wordt gedaan m.b.v. [een onderliggende service](https://github.com/noord-hollandsarchief/preingest-mdto-utilities). 
+- Polish: Na de conversie naar OPEX, alle OPEX bestanden bijwerken d.m.v. XSLT transformatie. 
 
 ### ToPX naar MDTO
-- Convert
-- UpdatePronum
-- UpdateFixity
-- UpdateRelationshipReferences
+- Convert: Converten van ToPX metadata bestanden naar MDTO metadata bestanden.
+- UpdatePronum: Na conversie, de MDTO metadata bestanden van type 'bestand' voorzien van PRONUM gegevens uit de classificatie resultaten (vereist de actie 'Exporting')
+- UpdateFixity: Na de conversie, de MDTO metadata bestanden van type 'bestand' voorzien van fixity/checksum waarde.
+- UpdateRelationshipReferences: Na de conversie, de MDTO metadata bestanden voorzien van bovenliggende en onderliggende relaties.
+
+## Status van collectie/actie
+
+Bij het verwerken van een werkschema voor een collectie kunnen de volgende statussen voorkomen:
+
+- `Running` als een actie aan het verwerken is, anders:
+- `Failed` als een actie heeft gefaald, anders:
+- `Error` als een actie een fout bevat, anders:
+- `Success` als een actie (en ook alle overige acties) een succes bevat, anders:
+- `New` als een actie of werkschema niet is gestart.
+
+Het opslaan van de configuratie wordt ook als een actie gezien. Deze krijgt ook een succes in dien het opslaan is gelukt.
 
 ## OpenAPI (Swagger)
-Voor een volledige REST-API specificaties van de preingest tool, start de service en ga naar http://[servername][port]/swagger/index.html.
+Bij het starten van de preingest API kan de health status opgevraagd wordne via <http://[servernaam]:[poort]/api/preingest/check>. Een OpenAPI specificatie is beschikbaar via <http://[servernaam]:[poort]/swagger/v1/swagger.json>. Swagger UI is beschikbaar via http://[servernaam]:[poort]/swagger.
 
 ## Local database
+Voor het automatisch verwerken van een werkschema is een database toegepast om de voortgang te bewaren. Dit is een SQLite database en de database bestanden worde lokaal opgeslagen op een werkmap. De opslag locatie is te vinden in de appsettings.json. Deze kan bijv. overgeschreven worden via docker commandline via environments of docker-compose opstart bestand.
 
-## Configuraties
+A single-file SQLite database is used to keep track of the current processes. This only holds temporary data and will be
+re-created on startup if needed. So, in case of failures:
+
+- Stop the pre-ingest (Docker) processes
+- Remove the database file (see `DBFOLDER` below)
+- Remove all session folders from the data folder (see `DATAFOLDER` below)
+- Restart the pre-ingest for archives that still need processing
+
+The database [should NOT be stored on a network share](https://sqlite.org/forum/forumpost/33f1a3a91d?t=h). And to avoid
+database errors you may want to exclude its working folder from any virus scanning as well.
 
 ## SignalR (websocket)
+De preingest tool heeft ook de mogelijkheid om real-time informatie terug te koppelen d.m.v. SignalR websocket. Voorbeelden met connectie naar SignalR websocket zijn te vinden map `wwwroot`. De [workerservice](https://github.com/noord-hollandsarchief/preingest-workerservice) maakt ook gebruik van SignalR websocket.
 
 ## Docker
+De preingest REST API wordt als een Docker image gecompileerd. Om de image te kunnen gebruiken is een Docker omgeving nodig met ondersteuning voor Linux. Voor Windows besturingsystemen is Hyper-V nodig of WSL2.
+
+De preingest REST API vereist enkele map verwijzingen tijden opstarten van de image. De mappen zijn `/data` (verwijzing naar de map met alle collecties) en `/db` (verwijzing naar de opslag locatie voor de database).
+
+Indien de image wordt gestart d.m.v. docker-compose, maak gebruik van een .env bestand 
+    ```env
+    DATAFOLDER=/path/to/data-folder
+    # The database MUST be stored in a folder on the local machine, not on a network share
+    DBFOLDER=/local/path/to/database-folder
+    SIPCREATORFOLDER=/path/to/sip-creator-installation-folder
+    TOMCATLOGFOLDER=/path/to/tomcat-log-folder
+    TRANSFERAGENTTESTFOLDER=/path/to/transfer-agent-test-folder
+    TRANSFERAGENTPRODFOLDER=/path/to/transfer-agent-production-folder
+    XSLWEBPREWASHFOLDER=/path/to/prewash-xml-stylesheets-folder
+   
+## Enkele known issues en troubleshooting
+- An action never completes: if somehow the orchestrating API misses out on the completed signal of a delegated action,
+  then that action may stay in its running state forever (and the frontend will just increase the elapsed time). As a
+  quick fix, remove the results of the very file from the database and file system (in the frontend: select it in the
+  overview page to see the options) and restart all processing of the file. If the same problem keeps occurring then
+  please contact us.
+  
+- `clamav exited with code 137` and `/bootstrap.sh: line 35: 15 Killed clamd`: increase the memory for the Docker host.
+
+- `SQLite Error 14: 'unable to open database file'`
+
+  - ensure the database file is NOT stored on a network share
+  - exclude the database file (default: `$DBFOLDER/preingest.db`) from virus scanning
+
+- `Access to the path '...' is denied` and zero-byte files are created on a CIFS/SMB network share: ensure to [include
+   `nobrl` in the driver options](https://github.com/dotnet/runtime/issues/42790#issuecomment-817758887).
+
+## Trademarks
+Preservica™ is een handelsmerk van [Preservica Ltd](https://preservica.com/). Noord-Hollands Archief is niet aangesloten aan Preservica™. 
 
 
+
+  
 
