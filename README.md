@@ -123,7 +123,7 @@ re-created on startup if needed. So, in case of failures:
 The database [should NOT be stored on a network share](https://sqlite.org/forum/forumpost/33f1a3a91d?t=h). And to avoid
 database errors you may want to exclude its working folder from any virus scanning as well.
 
-## SignalR (websocket)
+## Websocket (SignalR)
 De preingest tool heeft ook de mogelijkheid om real-time informatie terug te koppelen d.m.v. SignalR websocket. Voorbeelden met connectie naar SignalR websocket zijn te vinden map `wwwroot`. De [workerservice](https://github.com/noord-hollandsarchief/preingest-workerservice) maakt ook gebruik van SignalR websocket.
 
 ## Docker
