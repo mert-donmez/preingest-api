@@ -132,6 +132,7 @@ De preingest REST API wordt als een Docker image gecompileerd. Om de image te ku
 De preingest REST API vereist enkele map verwijzingen tijden opstarten van de image. De mappen zijn `/data` (verwijzing naar de map met alle collecties) en `/db` (verwijzing naar de opslag locatie voor de database).
 
 Indien de image wordt gestart d.m.v. docker-compose, maak gebruik van een .env bestand 
+    
     ```env
     DATAFOLDER=/path/to/data-folder
     # The database MUST be stored in a folder on the local machine, not on a network share
@@ -141,7 +142,8 @@ Indien de image wordt gestart d.m.v. docker-compose, maak gebruik van een .env b
     TRANSFERAGENTTESTFOLDER=/path/to/transfer-agent-test-folder
     TRANSFERAGENTPRODFOLDER=/path/to/transfer-agent-production-folder
     XSLWEBPREWASHFOLDER=/path/to/prewash-xml-stylesheets-folder
-   
+    ```
+    
 ## Enkele known issues en troubleshooting
 - An action never completes: if somehow the orchestrating API misses out on the completed signal of a delegated action,
   then that action may stay in its running state forever (and the frontend will just increase the elapsed time). As a
