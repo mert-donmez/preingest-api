@@ -15,6 +15,7 @@ using System.Xml.Xsl;
 using System.Text;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Handler;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Output;
+using System.Web;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -136,6 +137,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 if (result.TotalContentData != null && result.TotalContentData.Count > 0)
                 {
                     totalResult.Add(result);
+                    var emptyElementsResult = ContinueDefaultCollectionItems(TargetFolder, false, true);
+                    totalResult.Add(emptyElementsResult);
                 }
                 else
                 {
@@ -225,7 +228,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         /// or
         /// Error(s) found while transforming metadata files with stylesheet!
         /// </exception>
-        private ResultPair ContinueDefaultCollectionItems(string folder)
+        private ResultPair ContinueDefaultCollectionItems(string folder, bool validateSchema = true, bool flattenOnlyEmptyElements = false)
         {
             DirectoryInfo targetDirectory = new DirectoryInfo(folder);
 
@@ -260,23 +263,26 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 return new ResultPair() { Name = "Leeg", TotalContentData = new Dictionary<string, Dictionary<string, string>>(), TotalContentHeader = new HashSet<string>() };
             }
 
-            foreach (var fileInfo in filesResultList)
+            if (validateSchema)
             {
-                try
+                foreach (var fileInfo in filesResultList)
                 {
-                    var doc = XDocument.Load(fileInfo.FullName);
-                    string metadataContent = doc.ToString();
-                    Utilities.SchemaValidationHandler.Validate(metadataContent, CurrentXsdFileLocation);
+                    try
+                    {
+                        var doc = XDocument.Load(fileInfo.FullName);
+                        string metadataContent = doc.ToString();
+                        Utilities.SchemaValidationHandler.Validate(metadataContent, CurrentXsdFileLocation);
+                    }
+                    catch (Exception e)
+                    {
+                        this._validationResultList.Add(new ProcessResultItem { Error = e, Metadata = fileInfo, Type = ProcessType.SchemaValidation });
+                    }
+                    finally { }
                 }
-                catch (Exception e)
-                {
-                    this._validationResultList.Add(new ProcessResultItem { Error = e, Metadata = fileInfo, Type = ProcessType.SchemaValidation });
-                }
-                finally { }
-            }
 
-            if (_validationResultList.Count > 0 && !IgnoreErrorValidationErrors)
-                throw new ApplicationException("Validation error(s) found using XSD schema.");
+                if (_validationResultList.Count > 0 && !IgnoreErrorValidationErrors)
+                    throw new ApplicationException("Validation error(s) found using XSD schema.");
+            }
 
             var styleList = Stylesheet.StylesheetHandler.GetStylesheetList();
             string stylesheet = styleList[StyleName];
@@ -295,7 +301,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 { 
                     XDocument metadata = XDocument.Load(fileInfo.FullName);
 
-                    string result = Transform(flattenXsl.ToString(), metadata.ToString());
+                    string result = Transform(flattenXsl.ToString(), metadata.ToString(), flattenOnlyEmptyElements);
                     string[] content = result.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
                     var singleContentData = new Dictionary<String, String>();
@@ -306,7 +312,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (splitCount.Count() == 2)
                         {
                             var key = splitCount[0];
-                            var val = splitCount[1];
+                            var val = String.IsNullOrEmpty(splitCount[1]) ? splitCount[1] : HttpUtility.HtmlDecode(splitCount[1]);
 
                             totalContentHeader.Add(key);
 
@@ -333,7 +339,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             if (_validationResultList.Count > 0 && !IgnoreErrorValidationErrors) 
                 throw new ApplicationException("Error(s) found while transforming metadata files with stylesheet!");            
 
-            return new ResultPair { Name = IsToPX ? "topx" : IsMDTO ? "mdto" : "onbekend", TotalContentData = totalContentData, TotalContentHeader = totalContentHeader };
+            return new ResultPair { Name = String.Concat(IsToPX ? "topx" : IsMDTO ? "mdto" : "onbekend", flattenOnlyEmptyElements ? " - NULL" : ""), TotalContentData = totalContentData, TotalContentHeader = totalContentHeader };
         }
 
         /// <summary>
@@ -409,7 +415,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (splitCount.Count() == 2)
                         {
                             var key = splitCount[0];
-                            var val = splitCount[1];
+                            var val = String.IsNullOrEmpty(splitCount[1]) ? splitCount[1] : HttpUtility.HtmlDecode(splitCount[1]);
 
                             totalContentHeader.Add(key);
 
@@ -445,7 +451,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         /// <param name="xsl">The XSL.</param>
         /// <param name="xml">The XML.</param>
         /// <returns></returns>
-        private String Transform(string xsl, string xml)
+        private String Transform(string xsl, string xml, bool flattenEmptyElements = false)
         {
             string output = String.Empty;
 
@@ -455,12 +461,15 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 using (XmlReader xrt = XmlReader.Create(srt))
                 using (XmlReader xri = XmlReader.Create(sri))
                 {
+                    XsltArgumentList argsList = new XsltArgumentList();
+                    argsList.AddParam("paramOutputType", "", flattenEmptyElements ? "empty" : "nonempty");
+
                     XslCompiledTransform xslt = new XslCompiledTransform();
                     xslt.Load(xrt);
                     using (UTF8StringWriter sw = new UTF8StringWriter())
                     using (XmlWriter xwo = XmlWriter.Create(sw, xslt.OutputSettings)) // use OutputSettings of xsl, so it can be output as HTML
                     {
-                        xslt.Transform(xri, xwo);
+                        xslt.Transform(xri, argsList, xwo);
                         output = sw.ToString();
                     }
                 }

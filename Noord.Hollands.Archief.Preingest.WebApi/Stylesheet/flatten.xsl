@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 	<xsl:output omit-xml-declaration="yes" indent="yes"/>
+	<xsl:param name="paramOutputType"></xsl:param>
 	<xsl:strip-space elements="*"/>
 	<xsl:template match="/*">
 		<xsl:apply-templates mode="children">
@@ -17,10 +18,10 @@
 	</xsl:template>
 	<xsl:template match="*[not(*)]" mode="children">
 		<xsl:param name="pName"/>
-		<xsl:if test="string-length(text()) > 0">
+		<xsl:if test="$paramOutputType='nonempty' and string-length(text()) > 0">
 			<xsl:value-of select="concat('/', $pName, '/', name(), ' | ', ., '&#10;')"/>
 		</xsl:if>
-		<xsl:if test="string-length(text()) = 0">
+		<xsl:if test="$paramOutputType='empty' and string-length(text()) = 0">
 			<xsl:value-of select="concat('/', $pName, '/', name(), ' | ', 'NULL', '&#10;')"/>
 		</xsl:if>
 	</xsl:template>

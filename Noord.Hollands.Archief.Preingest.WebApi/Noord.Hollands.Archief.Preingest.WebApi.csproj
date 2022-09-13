@@ -8,7 +8,8 @@
     <AssemblyName>Noord.Hollands.Archief.Preingest.WebApi</AssemblyName>
     <RootNamespace>Noord.Hollands.Archief.Preingest.WebApi</RootNamespace>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-	<Deterministic>false</Deterministic> 
+	<Deterministic>false</Deterministic>
+	<StartupObject>Noord.Hollands.Archief.Preingest.WebApi.Program</StartupObject> 
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

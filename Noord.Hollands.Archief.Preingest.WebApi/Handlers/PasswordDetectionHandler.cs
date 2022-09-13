@@ -18,6 +18,7 @@ using System.Globalization;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Threading;
+using System.Text.Json.Serialization;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -105,9 +106,29 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         {
                             bool isProtected = false;
                             bool containsMacros = false;
+                            bool containsEmbeddedFiles = false;
+                            bool containsEmbeddedLinks = false;
+
                             if (binary.Extension.Equals("pdf", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 isProtected = PdfHelper.IsPasswordProtected(binary.Location);
+
+                                try
+                                {
+                                    string encodedLocation = ChecksumHelper.Base64Encode(binary.Location);
+                                    string url = String.Format("http://{0}:{1}/utilities/find_embedded_files/{2}", ApplicationSettings.UtilitiesServerName, ApplicationSettings.UtilitiesServerPort, encodedLocation);
+                                    RootPdf dataResult;
+                                    using (HttpClient client = new HttpClient())
+                                    {
+                                        client.Timeout = Timeout.InfiniteTimeSpan;
+                                        HttpResponseMessage response = client.PostAsync(url, null).Result;
+                                        response.EnsureSuccessStatusCode();
+
+                                        dataResult = JsonConvert.DeserializeObject<RootPdf>(response.Content.ReadAsStringAsync().Result);
+                                        containsEmbeddedFiles = dataResult.Embedded.Count > 0;
+                                    }
+                                }
+                                catch (Exception) { }
                             }
                             else
                             {
@@ -117,15 +138,17 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                 {
                                     string encodedLocation = ChecksumHelper.Base64Encode(binary.Location);
                                     string url = String.Format("http://{0}:{1}/utilities/scan_for_macros/{2}", ApplicationSettings.UtilitiesServerName, ApplicationSettings.UtilitiesServerPort, encodedLocation);
-                                    Root dataResult;
+                                    RootOffice dataResult;
                                     using (HttpClient client = new HttpClient())
                                     {
                                         client.Timeout = Timeout.InfiniteTimeSpan;
                                         HttpResponseMessage response = client.PostAsync(url, null).Result;
                                         response.EnsureSuccessStatusCode();
 
-                                        dataResult = JsonConvert.DeserializeObject<Root>(response.Content.ReadAsStringAsync().Result);
-                                        containsMacros = dataResult.Result.AnalyzeMacros.Count() > 0;
+                                        dataResult = JsonConvert.DeserializeObject<RootOffice>(response.Content.ReadAsStringAsync().Result);
+                                        containsMacros = dataResult.Result.VbaMacros == "true" || dataResult.Result.XmlMacros == "true";
+                                        containsEmbeddedFiles = dataResult.Result.EmbeddedFiles == "true";
+                                        containsEmbeddedLinks = dataResult.Result.EmbeddedLinks == "true";
                                     }
                                 }
                                 catch (Exception) { }
@@ -138,7 +161,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             {
                                 Bestand = binary.Location,
                                 IsProtected = isProtected, // ? "Wachtwoord beveiliging gevonden" : "Geen wachtwoord beveiliging kunnen vinden",
-                                HasMacros = containsMacros // ? "Eén of meerdere macros gevonden" : "Geen macros kunnen vinden"
+                                HasMacros = containsMacros, // ? "Eén of meerdere macros gevonden" : "Geen macros kunnen vinden"
+                                HasEmbeddedFiles = containsEmbeddedFiles,
+                                HasEmbeddedLinks = containsEmbeddedLinks
                             });
                         }
 
@@ -149,10 +174,10 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         {
                             anyMessages.Add("Deze bestanden worden niet gecontroleerd op wachtwoord beveiliging:");
                             except.ForEach(item => anyMessages.Add(item.Location));
-                        }   
+                        }
                     }
-                }                   
-                               
+                }
+
                 eventModel.Properties.Messages = anyMessages.ToArray();
                 eventModel.ActionData = jsonData.ToArray();
                 eventModel.Summary.Accepted = eventModel.Summary.Processed - eventModel.Summary.Rejected;
@@ -228,69 +253,46 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             public bool InGreenList { get; set; }
         }
 
-        internal class AnalyzeMacro
+        // Root myDeserializedClass = JsonSerializer.Deserialize<Root>(myJsonResponse);
+        internal class Indicator
         {
-            [JsonProperty("type")]
-            public string Type { get; set; }
+            [JsonPropertyName("id")]
+            public string Id { get; set; }
 
-            [JsonProperty("keyword")]
-            public string Keyword { get; set; }
+            [JsonPropertyName("name")]
+            public string Name { get; set; }
 
-            [JsonProperty("description")]
+            [JsonPropertyName("value")]
+            public string Value { get; set; }
+
+            [JsonPropertyName("description")]
             public string Description { get; set; }
-        }
-
-        internal class ExtractMacro
-        {
-            [JsonProperty("filename")]
-            public string Filename { get; set; }
-
-            [JsonProperty("oleStream")]
-            public string OleStream { get; set; }
-
-            [JsonProperty("vbaFilename")]
-            public string VbaFilename { get; set; }
-
-            [JsonProperty("vbaCode")]
-            public string VbaCode { get; set; }
         }
 
         internal class Result
         {
-            [JsonProperty("analyzeMacros")]
-            public List<AnalyzeMacro> AnalyzeMacros { get; set; }
+            [JsonPropertyName("embeddedLinks")]
+            public string EmbeddedLinks { get; set; }
 
-            [JsonProperty("extractMacros")]
-            public List<ExtractMacro> ExtractMacros { get; set; }
+            [JsonPropertyName("vbaMacros")]
+            public string VbaMacros { get; set; }
 
-            [JsonProperty("autoExecKeyword")]
-            public int AutoExecKeyword { get; set; }
+            [JsonPropertyName("xmlMacros")]
+            public string XmlMacros { get; set; }
 
-            [JsonProperty("suspiciousKeyword")]
-            public int SuspiciousKeyword { get; set; }
+            [JsonPropertyName("vbaEncrypted")]
+            public string VbaEncrypted { get; set; }
 
-            [JsonProperty("iocs")]
-            public int Iocs { get; set; }
+            [JsonPropertyName("embeddedFiles")]
+            public string EmbeddedFiles { get; set; }
 
-            [JsonProperty("hexObfuscatedStrings")]
-            public int HexObfuscatedStrings { get; set; }
-
-            [JsonProperty("base64ObfuscatedStrings")]
-            public int Base64ObfuscatedStrings { get; set; }
-
-            [JsonProperty("dridexObfuscatedStrings")]
-            public int DridexObfuscatedStrings { get; set; }
-
-            [JsonProperty("vbaObfuscatedStrings")]
-            public int VbaObfuscatedStrings { get; set; }
-
-            [JsonProperty("reveal")]
-            public string Reveal { get; set; }
+            [JsonPropertyName("indicators")]
+            public List<Indicator> Indicators { get; set; }
         }
 
-        internal class Root
+        internal class RootOffice
         {
-            [JsonProperty("result")]
+            [JsonPropertyName("result")]
             public Result Result { get; set; }
         }
 
@@ -298,8 +300,40 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         {
             public String Bestand { get; set; }
             public bool IsProtected { get; set; }
-            public bool HasMacros { get; set; } 
+            public bool HasMacros { get; set; }
+            public bool HasEmbeddedFiles { get; set; }
+            public bool HasEmbeddedLinks { get; set; }
         }
+
+        // Root myDeserializedClass = JsonSerializer.Deserialize<Root>(myJsonResponse);
+        internal class Embedded
+        {
+            [JsonPropertyName("count")]
+            public int Count { get; set; }
+
+            [JsonPropertyName("files")]
+            public List<File> Files { get; set; }
+        }
+
+        internal class File
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; }
+
+            [JsonPropertyName("length")]
+            public int Length { get; set; }
+
+            [JsonPropertyName("size")]
+            public int Size { get; set; }
+        }
+
+        internal class RootPdf
+        {
+            [JsonPropertyName("embedded")]
+            public Embedded Embedded { get; set; }
+        }
+
+
 
     }
 }
