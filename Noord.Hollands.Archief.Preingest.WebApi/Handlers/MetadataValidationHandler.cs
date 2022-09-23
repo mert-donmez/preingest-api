@@ -18,7 +18,7 @@ using Noord.Hollands.Archief.Preingest.WebApi.EventHub;
 using Noord.Hollands.Archief.Preingest.WebApi.Utilities;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Event;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Handler;
-
+using Noord.Hollands.Archief.Preingest.WebApi.Entities.ToPX.v2_3_2;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -930,7 +930,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     currentErrorMessages.Add(String.Format("Het subelement 'begin' ontbreekt voor het element 'dekking/inTijd'."));                                    
                                     schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                                 }
-                                if (isBegin && isBegin)
+                                if (isBegin && isEind)
                                 {
                                     var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                                     currentErrorMessages.Add(String.Format("Het element 'dekking/InTijd/begin' en 'dekking/InTijd/eind' zijn niet aanwezig."));
@@ -940,8 +940,25 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                 {
                                     DateTime beginParseDate = DateTime.MinValue;
                                     DateTime eindParseDate = DateTime.MinValue;
-                                    String beginDateWaarde = dekkingInTijdItem.inTijd.begin.Item.ToString();
-                                    String eindDateWaarde = dekkingInTijdItem.inTijd.eind.Item.ToString();
+
+                                    //[System.Xml.Serialization.XmlElementAttribute("datum", typeof(datumOfJaarTypeDatum))]
+                                    //[System.Xml.Serialization.XmlElementAttribute("datumEnTijd", typeof(datumOfJaarTypeDatumEnTijd))]
+                                    //[System.Xml.Serialization.XmlElementAttribute("jaar", typeof(datumOfJaarTypeJaar))]
+                                    String beginDateWaarde = string.Empty;
+                                    if(dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeDatum)
+                                        beginDateWaarde = (dekkingInTijdItem.inTijd.begin.Item as datumOfJaarTypeDatum).Value.ToString();
+                                    if (dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeDatumEnTijd)
+                                        beginDateWaarde = (dekkingInTijdItem.inTijd.begin.Item as datumOfJaarTypeDatumEnTijd).Value.ToString();
+                                    if (dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeJaar)
+                                        beginDateWaarde = (dekkingInTijdItem.inTijd.begin.Item as datumOfJaarTypeJaar).Value.ToString();
+
+                                    String eindDateWaarde = String.Empty;
+                                    if (dekkingInTijdItem.inTijd.eind.Item is datumOfJaarTypeDatum)
+                                        eindDateWaarde = (dekkingInTijdItem.inTijd.eind.Item as datumOfJaarTypeDatum).Value.ToString();
+                                    if (dekkingInTijdItem.inTijd.eind.Item is datumOfJaarTypeDatumEnTijd)
+                                        eindDateWaarde = (dekkingInTijdItem.inTijd.eind.Item as datumOfJaarTypeDatumEnTijd).Value.ToString();
+                                    if (dekkingInTijdItem.inTijd.eind.Item is datumOfJaarTypeJaar)
+                                        eindDateWaarde = (dekkingInTijdItem.inTijd.eind.Item as datumOfJaarTypeJaar).Value.ToString();
 
                                     string yearFormat = @"\d{4}";
                                     string yeahMonthFormat = @"\d{4}-\d{2}";
