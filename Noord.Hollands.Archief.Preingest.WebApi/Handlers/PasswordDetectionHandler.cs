@@ -111,10 +111,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
                             if (binary.Extension.Equals("pdf", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                isProtected = PdfHelper.IsPasswordProtected(binary.Location);
-
                                 try
                                 {
+                                    isProtected = PdfHelper.IsPasswordProtected(binary.Location);
                                     string encodedLocation = ChecksumHelper.Base64Encode(binary.Location);
                                     string url = String.Format("http://{0}:{1}/utilities/find_embedded_files/{2}", ApplicationSettings.UtilitiesServerName, ApplicationSettings.UtilitiesServerPort, encodedLocation);
                                     RootPdf dataResult;
@@ -125,17 +124,19 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                         response.EnsureSuccessStatusCode();
 
                                         dataResult = JsonConvert.DeserializeObject<RootPdf>(response.Content.ReadAsStringAsync().Result);
-                                        containsEmbeddedFiles = dataResult.Embedded.Count > 0;
+                                        containsEmbeddedFiles = dataResult.Embedded.Count > 0;                                   
                                     }
                                 }
-                                catch (Exception) { }
+                                catch (Exception ie)
+                                {
+                                    anyMessages.Add(String.Format("Er heeft een fout plaatsgevonden met bestand {0}: {1}, {2}", binary.Location, ie.Message, ie.StackTrace));
+                                }
                             }
                             else
-                            {
-                                isProtected = MsOfficeHelper.IsPasswordProtected(binary.Location);
-
+                            {                                
                                 try
                                 {
+                                    isProtected = MsOfficeHelper.IsPasswordProtected(binary.Location);
                                     string encodedLocation = ChecksumHelper.Base64Encode(binary.Location);
                                     string url = String.Format("http://{0}:{1}/utilities/scan_for_macros/{2}", ApplicationSettings.UtilitiesServerName, ApplicationSettings.UtilitiesServerPort, encodedLocation);
                                     RootOffice dataResult;
@@ -144,14 +145,17 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                         client.Timeout = Timeout.InfiniteTimeSpan;
                                         HttpResponseMessage response = client.PostAsync(url, null).Result;
                                         response.EnsureSuccessStatusCode();
-
+                                        
                                         dataResult = JsonConvert.DeserializeObject<RootOffice>(response.Content.ReadAsStringAsync().Result);
                                         containsMacros = dataResult.Result.VbaMacros == "true" || dataResult.Result.XmlMacros == "true";
                                         containsEmbeddedFiles = dataResult.Result.EmbeddedFiles == "true";
                                         containsEmbeddedLinks = dataResult.Result.EmbeddedLinks == "true";
                                     }
                                 }
-                                catch (Exception) { }
+                                catch (Exception ie)
+                                {
+                                    anyMessages.Add(String.Format("Er heeft een fout plaatsgevonden met bestand {0}: {1}, {2}", binary.Location, ie.Message, ie.StackTrace));
+                                }
                             }
 
                             if (isProtected)
@@ -183,6 +187,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 eventModel.Summary.Accepted = eventModel.Summary.Processed - eventModel.Summary.Rejected;
 
                 if (eventModel.Summary.Rejected > 0)
+                    eventModel.ActionResult.ResultValue = PreingestActionResults.Error;
+                else if(eventModel.Properties.Messages.Count() > 0)
                     eventModel.ActionResult.ResultValue = PreingestActionResults.Error;
                 else
                     eventModel.ActionResult.ResultValue = PreingestActionResults.Success;

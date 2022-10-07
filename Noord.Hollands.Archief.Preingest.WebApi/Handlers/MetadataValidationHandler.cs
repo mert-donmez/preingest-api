@@ -100,7 +100,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         ValidateVoorwaardelijkeControleSubelementenBeginEindDekkingInTijd(file, schemaResult);
                     }
                     //3
-                    //ValidateOmvang(file, schemaResult);
+                    ValidateOmvang(file, schemaResult);
 
                     validation.Add(schemaResult);
 
@@ -198,7 +198,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
@@ -328,7 +328,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
@@ -441,7 +441,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
@@ -583,7 +583,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
         
@@ -866,7 +866,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
@@ -1017,7 +1017,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
@@ -1044,7 +1044,6 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
                 string expression = @"^(Archief$|Dossier$|Zaak$)";
                 var label = informatieobject.aggregatieniveau.begripLabel.Trim();
-                var code = informatieobject.aggregatieniveau.begripCode.Trim();
 
                 bool isValid = Regex.IsMatch(label, expression, RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
@@ -1122,6 +1121,12 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             }
                         }
                     }
+                    else
+                    {
+                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                        currentErrorMessages.Add(@"Het element 'dekkingInTijd' ontbreekt. Het element 'dekkingInTijd/begripLabel' met de waarde 'Looptijd' ontbreekt.");
+                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                    }
                 }
             }
             catch (Exception e)
@@ -1136,7 +1141,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
@@ -1182,7 +1187,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                 if (info.Length != i)
                                 {
                                     var currentErrorMessages = schemaResult.ErrorMessages.ToList();
-                                    currentErrorMessages.Add(String.Format("Omvang in metadata  komt niet overeen met de omvang van fysieke content bestand. Omvang (metadata) = {0}, Omvang (fysieke bestand) = {1}", i, info.Length));
+                                    currentErrorMessages.Add(String.Format("Omvang in metadata komt niet overeen met de omvang van fysieke content bestand. Omvang (metadata) = {0}, Omvang (fysieke bestand) = {1}", i, info.Length));
                                     schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                                 }
                             }
@@ -1217,7 +1222,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (info.Length != i)
                         {
                             var currentErrorMessages = schemaResult.ErrorMessages.ToList();
-                            currentErrorMessages.Add(String.Format("Omvang in metadata  komt niet overeen met de omvang van fysieke content bestand. Omvang (metadata) = {0}, Omvang (fysieke bestand) = {1}", i, info.Length));
+                            currentErrorMessages.Add(String.Format("Omvang in metadata komt niet overeen met de omvang van fysieke content bestand. Omvang (metadata) = {0}, Omvang (fysieke bestand) = {1}", i, info.Length));
                             schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                         }
                     }
@@ -1236,7 +1241,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                 currentErrorMessages.AddRange(errorMessages);
                 //error
-                schemaResult.ErrorMessages.ToArray();
+                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
 
