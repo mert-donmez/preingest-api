@@ -133,10 +133,13 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
             //overwrite
             if (directories.Count > 0)
             {
-                currentOpexMetadataFile.Transfer.Manifest = new Noord.Hollands.Archief.Entities.Opex.manifest();
+                if (currentOpexMetadataFile.Transfer.Manifest == null)
+                    currentOpexMetadataFile.Transfer.Manifest = new Noord.Hollands.Archief.Entities.Opex.manifest();
+                
                 currentOpexMetadataFile.Transfer.Manifest.Folders = directories.Select(item => item.Name).ToArray();
             }
-
+            //generate default GUID. Overwrite it with stylesheet.
+            currentOpexMetadataFile.Transfer.SourceID = Guid.NewGuid().ToString();
             FinalUpdatedOpexMetadata = Preingest.WebApi.Utilities.SerializerHelper.SerializeObjectToString(currentOpexMetadataFile);
         }
 

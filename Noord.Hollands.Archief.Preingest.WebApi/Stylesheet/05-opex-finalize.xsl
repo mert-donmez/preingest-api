@@ -9,6 +9,7 @@ exclude-result-prefixes="x t m" xmlns="http://www.openpreservationexchange.org/o
 			<xsl:apply-templates select="@* | node()"/>
 		</xsl:copy>
 	</xsl:template>
+	<!-- Since we're using generated GUID  for creating OPEX
 	<xsl:template match="x:SourceID">
 		<xsl:choose>
 			<xsl:when test="/x:OPEXMetadata/x:DescriptiveMetadata/x:ToPX/x:aggregatie">
@@ -34,6 +35,7 @@ exclude-result-prefixes="x t m" xmlns="http://www.openpreservationexchange.org/o
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
+	-->
 	<xsl:template match="x:Title">
 		<xsl:choose>
 			<xsl:when test="/x:OPEXMetadata/x:DescriptiveMetadata/x:ToPX/x:bestand">

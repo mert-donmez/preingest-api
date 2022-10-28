@@ -333,7 +333,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         }
 
         private DateTime? ParseTermijnDatum(String termijnDatum)
-        { 
+        {
+            if (String.IsNullOrEmpty(termijnDatum))
+                return null;
             // xsd:gYear
             // xsd:gYearMonth
             // xsd:date
@@ -794,8 +796,10 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     //alleen openbaar
                     if(openbaar && !beperkt)
                     {
+#pragma warning disable
                         //DateTime is nooit een NULL. Hoog waarschijnlijk al met schema validatie al gedetecteerd....
                         if (item.beperkingGebruikTermijn.termijnStartdatumLooptijd == null || item.beperkingGebruikTermijn.termijnStartdatumLooptijd == DateTime.MinValue)
+#pragma warning enable
                         {
                             var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                             currentErrorMessages.Add("Het subelement 'beperkingGebruik/beperkingGebruikTermijn/termijnStartdatumLooptijd' heeft geen waarde.");
@@ -805,8 +809,11 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     //beperkt openbaar
                     if(openbaar && beperkt)
                     {
+#pragma warning disable
+
                         //DateTime is nooit een NULL. Hoog waarschijnlijk al met schema validatie al gedetecteerd....
                         bool startHasValue = item.beperkingGebruikTermijn.termijnStartdatumLooptijd != null || item.beperkingGebruikTermijn.termijnStartdatumLooptijd > DateTime.MinValue;
+#pragma warning enable
                         //xsd:gYear xsd:gYearMonth xsd:date
                         bool eindHasValue = !String.IsNullOrEmpty(item.beperkingGebruikTermijn.termijnEinddatum);
  
@@ -941,9 +948,18 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     DateTime beginParseDate = DateTime.MinValue;
                                     DateTime eindParseDate = DateTime.MinValue;
 
-                                    //[System.Xml.Serialization.XmlElementAttribute("datum", typeof(datumOfJaarTypeDatum))]
-                                    //[System.Xml.Serialization.XmlElementAttribute("datumEnTijd", typeof(datumOfJaarTypeDatumEnTijd))]
-                                    //[System.Xml.Serialization.XmlElementAttribute("jaar", typeof(datumOfJaarTypeJaar))]
+                                    if(dekkingInTijdItem.inTijd.eind == null || dekkingInTijdItem.inTijd.begin == null)
+                                    {
+                                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                                        currentErrorMessages.Add("Waarde ontleden voor het element 'begin' of 'eind' in het element 'dekking/inTijd' niet gelukt.");
+                                        if(dekkingInTijdItem.inTijd.eind == null)
+                                            currentErrorMessages.Add("Element 'eind' in het element 'dekking/inTijd' is niet aanwezig.");
+                                        if (dekkingInTijdItem.inTijd.begin == null)
+                                            currentErrorMessages.Add("Element 'begin' in het element 'dekking/inTijd' is niet aanwezig.");
+                                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                                        return;
+                                    }
+
                                     String beginDateWaarde = string.Empty;
                                     if(dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeDatum)
                                         beginDateWaarde = (dekkingInTijdItem.inTijd.begin.Item as datumOfJaarTypeDatum).Value.ToString();
@@ -1084,12 +1100,12 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             string yeahMonthFormat = @"\d{4}-\d{2}";
 
                             bool isDateBegin = DateTime.TryParse(beginDateWaarde, out beginParseDate);
-                            bool isYearBegin = Regex.IsMatch(beginDateWaarde, yearFormat);
-                            bool isYearMonthBegin = Regex.IsMatch(beginDateWaarde, yeahMonthFormat);
+                            bool isYearBegin = String.IsNullOrEmpty (beginDateWaarde) ? false : Regex.IsMatch(beginDateWaarde, yearFormat);
+                            bool isYearMonthBegin = String.IsNullOrEmpty(beginDateWaarde) ? false : Regex.IsMatch(beginDateWaarde, yeahMonthFormat);
 
                             bool isDateEind = DateTime.TryParse(eindDateWaarde, out eindParseDate);
-                            bool isYearEind = Regex.IsMatch(eindDateWaarde, yearFormat);
-                            bool isYearMonthEind = Regex.IsMatch(eindDateWaarde, yeahMonthFormat);
+                            bool isYearEind = String.IsNullOrEmpty(eindDateWaarde) ? false :  Regex.IsMatch(eindDateWaarde, yearFormat);
+                            bool isYearMonthEind = String.IsNullOrEmpty(eindDateWaarde) ? false : Regex.IsMatch(eindDateWaarde, yeahMonthFormat);
 
                             if ((isDateBegin && isDateEind) || (isYearBegin && isYearEind) || (isYearMonthBegin && isYearMonthEind))
                             {
