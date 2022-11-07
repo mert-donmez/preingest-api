@@ -344,8 +344,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             if (isSuccess)
                 return parseOut;
 
-            string yearFormat = @"\d{4}";
-            string yeahMonthFormat = @"\d{4}-\d{2}";
+            string yearFormat = @"^\d{4}$";
+            string yeahMonthFormat = @"^\d{4}-\d{2}$";
 
             bool isYear = Regex.IsMatch(termijnDatum, yearFormat);
             bool isYearMonth = Regex.IsMatch(termijnDatum, yeahMonthFormat);
@@ -833,8 +833,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (startHasValue && eindHasValue)
                         {
                             DateTime parseOut = DateTime.MinValue;
-                            string yearFormat = @"\d{4}";
-                            string yeahMonthFormat = @"\d{4}-\d{2}";
+                            string yearFormat = @"^\d{4}$";
+                            string yeahMonthFormat = @"^\d{4}-\d{2}$";
 
                             bool isDate = DateTime.TryParse(item.beperkingGebruikTermijn.termijnEinddatum, out parseOut);
                             bool isYear = Regex.IsMatch(item.beperkingGebruikTermijn.termijnEinddatum, yearFormat);
@@ -976,8 +976,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     if (dekkingInTijdItem.inTijd.eind.Item is datumOfJaarTypeJaar)
                                         eindDateWaarde = (dekkingInTijdItem.inTijd.eind.Item as datumOfJaarTypeJaar).Value.ToString();
 
-                                    string yearFormat = @"\d{4}";
-                                    string yeahMonthFormat = @"\d{4}-\d{2}";
+                                    string yearFormat = @"^\d{4}$";
+                                    string yeahMonthFormat = @"^\d{4}-\d{2}$";
 
                                     bool isDateBegin = DateTime.TryParse(beginDateWaarde, out beginParseDate);
                                     bool isYearBegin = Regex.IsMatch(beginDateWaarde, yearFormat);
@@ -1084,20 +1084,30 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (count == 1)
                         {
                             var dekkingInTijdGegevens = informatieobject.dekkingInTijd.FirstOrDefault(item => (item.dekkingInTijdType != null && !String.IsNullOrEmpty(item.dekkingInTijdType.begripLabel)) && Regex.IsMatch(item.dekkingInTijdType.begripLabel.Trim(), looptijdExpression, RegexOptions.IgnoreCase | RegexOptions.Singleline));
+                            
+                            if (String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdBegindatum))
+                            {
+                                var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                                currentErrorMessages.Add("Waarde 'dekkingInTijdBegindatum' ontbreekt voor het element 'dekkingInTijd' i.c.m. de waarde 'Looptijd' voor het subelement 'dekkingInTijdType/begripLabel'");
+                                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                            }
                             if (String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdEinddatum))
                             {
                                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                                 currentErrorMessages.Add("Waarde 'dekkingInTijdEinddatum' ontbreekt voor het element 'dekkingInTijd' i.c.m. de waarde 'Looptijd' voor het subelement 'dekkingInTijdType/begripLabel'");
                                 schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                             }
+                            if (String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdBegindatum) || String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdEinddatum))
+                                return;
 
                             DateTime beginParseDate = DateTime.MinValue;
                             DateTime eindParseDate = DateTime.MinValue;
                             String beginDateWaarde = dekkingInTijdGegevens.dekkingInTijdBegindatum;
                             String eindDateWaarde = dekkingInTijdGegevens.dekkingInTijdEinddatum;
 
-                            string yearFormat = @"\d{4}";
-                            string yeahMonthFormat = @"\d{4}-\d{2}";
+                            string yearFormat = @"^\d{4}$";
+                            string yeahMonthFormat = @"^\d{4}-\d{2}$";
+                            string yeahMonthDayFormat = @"^\d{4}-\d{2}-\d{2}$";
 
                             bool isDateBegin = DateTime.TryParse(beginDateWaarde, out beginParseDate);
                             bool isYearBegin = String.IsNullOrEmpty (beginDateWaarde) ? false : Regex.IsMatch(beginDateWaarde, yearFormat);
@@ -1106,6 +1116,16 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             bool isDateEind = DateTime.TryParse(eindDateWaarde, out eindParseDate);
                             bool isYearEind = String.IsNullOrEmpty(eindDateWaarde) ? false :  Regex.IsMatch(eindDateWaarde, yearFormat);
                             bool isYearMonthEind = String.IsNullOrEmpty(eindDateWaarde) ? false : Regex.IsMatch(eindDateWaarde, yeahMonthFormat);
+
+                            if (! (Regex.IsMatch(beginDateWaarde, yearFormat) && Regex.IsMatch(eindDateWaarde, yearFormat)))
+                                if (! (Regex.IsMatch(beginDateWaarde, yeahMonthFormat) && Regex.IsMatch(eindDateWaarde, yeahMonthFormat)) )
+                                    if (! (Regex.IsMatch(beginDateWaarde, yeahMonthDayFormat) && Regex.IsMatch(eindDateWaarde, yeahMonthDayFormat)))
+                                    {
+                                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                                        currentErrorMessages.Add("Datum notatie voor dekkingInTijdBegindatum en dekkingInTijdEinddatum komen niet overeen.");
+                                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                                        return;
+                                    }
 
                             if ((isDateBegin && isDateEind) || (isYearBegin && isYearEind) || (isYearMonthBegin && isYearMonthEind))
                             {
