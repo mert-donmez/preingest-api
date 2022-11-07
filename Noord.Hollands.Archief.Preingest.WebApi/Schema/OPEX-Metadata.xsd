@@ -1,29 +1,30 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="http://www.openpreservationexchange.org/opex/v1.0" xmlns:opex="http://www.openpreservationexchange.org/opex/v1.0" xmlns:tns="http://www.openpreservationexchange.org/opex/v1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="http://www.openpreservationexchange.org/opex/v1.1" xmlns="http://www.openpreservationexchange.org/opex/v1.1" xmlns:tns="http://www.openpreservationexchange.org/opex/v1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-  <xs:element name="OPEXMetadata" type="tns:opexMetadata"/>
+  <xs:element name="OPEXMetadata" type="opexMetadata"/>
 
   <xs:complexType name="opexMetadata">
     <xs:sequence>
-      <xs:element name="Transfer" type="tns:transfer" minOccurs="0"/>
-      <xs:element name="Properties" type="tns:Properties" minOccurs="0"/>
-      <xs:element name="History" type="tns:History" minOccurs="0"/>
-      <xs:element name="Relationships" type="tns:Relationships" minOccurs="0"/>
-      <xs:element name="DescriptiveMetadata" type="tns:DescriptiveMetadata" minOccurs="0"/>
+      <xs:element name="Transfer" type="transfer" minOccurs="0"/>
+      <xs:element name="Properties" type="Properties" minOccurs="0"/>
+      <xs:element name="History" type="History" minOccurs="0"/>
+      <xs:element name="Relationships" type="Relationships" minOccurs="0"/>
+      <xs:element name="DescriptiveMetadata" type="DescriptiveMetadata" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="transfer">
     <xs:sequence>
       <xs:element name="SourceID" type="xs:string" minOccurs="0"/>
-      <xs:element name="Manifest" type="tns:manifest" minOccurs="0"/>
+      <xs:element name="Manifest" type="manifest" minOccurs="0"/>
       <xs:element name="Fixities" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="Fixity" type="tns:fixity" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Fixity" type="fixity" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
+      <xs:element name="OriginalFilename" type="xs:string" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -32,14 +33,14 @@
       <xs:element name="Files" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="File" type="tns:file" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="File" type="file" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
       <xs:element name="Folders" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="Folder" type="tns:folder" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Folder" type="folder" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -50,7 +51,7 @@
     <xs:simpleContent>
       <xs:extension base="xs:string">
         <xs:attribute name="size" type="xs:long"/>
-        <xs:attribute name="type" type="tns:fileType"/>
+        <xs:attribute name="type" type="fileType"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -73,7 +74,7 @@
       <xs:element name="Identifiers" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="Identifier" type="tns:Identifier" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Identifier" type="Identifier" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -93,7 +94,7 @@
       <xs:element name="Events" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="Event" type="tns:Event" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Event" type="Event" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -112,7 +113,7 @@
 
   <xs:complexType name="Relationships">
     <xs:sequence>
-      <xs:element name="Relationship" type="tns:Relationship" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="Relationship" type="Relationship" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
 

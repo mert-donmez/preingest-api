@@ -247,7 +247,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers.OPEX
 
                 OnTrigger(new PreingestEventArgs { Description = String.Format("Reading Opex files for XSD schema validation."), Initiate = DateTimeOffset.Now, ActionType = PreingestActionStates.Executing, PreingestAction = eventModel });
 
-                var newOpexFiles = opexUploadFolder.GetFiles("*.opex").ToList();
+                var newOpexFiles = opexUploadFolder.GetFiles("*.opex", SearchOption.AllDirectories).ToList();
                 var schemaList = SchemaHandler.GetSchemaList();
 
                 var strXsd = schemaList["Noord.Hollands.Archief.Preingest.WebApi.Schema.OPEX-Metadata.xsd"];
@@ -355,21 +355,21 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers.OPEX
 
             string opexMetadataFilename = Path.Combine(currentOutputResultFolder.FullName, String.Concat(topLevelOpexFileName, ".opex"));
 
-            Noord.Hollands.Archief.Entities.Opex.opexMetadata opex = new Noord.Hollands.Archief.Entities.Opex.opexMetadata();
+            opexMetadata opex = new opexMetadata();
 
-            opex.Transfer = new Noord.Hollands.Archief.Entities.Opex.transfer();
+            opex.Transfer = new transfer();
             opex.Transfer.SourceID = Guid.NewGuid().ToString();
-            opex.Transfer.Manifest = new Noord.Hollands.Archief.Entities.Opex.manifest();
+            opex.Transfer.Manifest = new manifest();
             opex.Transfer.Manifest.Folders = new string[] { collectionName };
 
-            opex.Properties = new Noord.Hollands.Archief.Entities.Opex.Properties();
+            opex.Properties = new Properties();
             opex.Properties.Title = currentOutputResultFolder.Name;
             opex.Properties.Description = description;
             opex.Properties.SecurityDescriptor = securityTag;
 
-            opex.DescriptiveMetadata = new Noord.Hollands.Archief.Entities.Opex.DescriptiveMetadata();
+            opex.DescriptiveMetadata = new DescriptiveMetadata();
 
-            Preingest.WebApi.Utilities.SerializerHelper.SerializeObjectToXmlFile<Noord.Hollands.Archief.Entities.Opex.opexMetadata>(opex, opexMetadataFilename);
+            Preingest.WebApi.Utilities.SerializerHelper.SerializeObjectToXmlFile<opexMetadata>(opex, opexMetadataFilename);
 
             return new FileInfo(opexMetadataFilename);
         }

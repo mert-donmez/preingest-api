@@ -37,7 +37,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Service
         RelationshipHandler,
         FixityPropsHandler,
         BinaryFileObjectValidationHandler,
-        BinaryFileMetadataMutationHandler
+        BinaryFileMetadataMutationHandler,
+        BuildNonMetadataOpexHandler
     }
 
 

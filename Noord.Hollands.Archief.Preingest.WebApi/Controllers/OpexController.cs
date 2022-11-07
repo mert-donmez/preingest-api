@@ -271,6 +271,40 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
 
             return new JsonResult(new { Message = String.Format("Polish run started."), SessionId = guid, ActionId = processId });
         }
+
+        [HttpPut("buildnonmetadataopex/{guid}", Name = "Build Opex (non metadata) for ingest.", Order = 7)]
+        public IActionResult BuildOpexNonMetadata(Guid guid)
+        {
+            if (guid == Guid.Empty)
+                return Problem("Empty GUID is invalid.");
+
+            _logger.LogInformation("Enter BuildOpex.");
+
+            //database process id
+            Guid processId = Guid.NewGuid();
+            try
+            {
+                Task.Run(() =>
+                {
+                    using (BuildNonMetadataOpexHandler handler = new BuildNonMetadataOpexHandler(_settings, _eventHub, _preingestCollection))
+                    {
+                        handler.Logger = _logger;
+                        handler.SetSessionGuid(guid);
+                        processId = handler.AddProcessAction(processId, typeof(BuildNonMetadataOpexHandler).Name, String.Format("Build Opex with collection ID: {0}", guid), String.Concat(typeof(BuildNonMetadataOpexHandler).Name, ".json"));
+                        _logger.LogInformation("Execute handler ({0}) with GUID {1}.", typeof(BuildNonMetadataOpexHandler).Name, guid.ToString());
+                        handler.Execute();
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An exception was thrown in {0}: '{1}'.", typeof(BuildOpexHandler).Name, e.Message);
+                return ValidationProblem(e.Message, typeof(BuildOpexHandler).Name);
+            }
+            _logger.LogInformation("Exit BuildOpexNonMetadata.");
+            return new JsonResult(new { Message = String.Format("Build Opex started."), SessionId = guid, ActionId = processId });
+        }
+    
     }
 
 

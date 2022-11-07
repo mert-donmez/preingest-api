@@ -148,16 +148,18 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers.OPEX
                     FileInfo opex = new FileInfo(item.FullName);
                     FileInfo[] currentContent = opex.Directory.GetFiles().Where(content => content.FullName != item.FullName).ToArray();
 
-                    var currentOpexMetadataFile = Preingest.WebApi.Utilities.DeserializerHelper.DeSerializeObjectFromXmlFile<Noord.Hollands.Archief.Entities.Opex.opexMetadata>(item.Xml);
+                    var currentOpexMetadataFile = Preingest.WebApi.Utilities.DeserializerHelper.DeSerializeObjectFromXmlFile<opexMetadata>(item.Xml);
                     //overwrite
                     if (currentContent.Count() > 0)
                     {
-                        currentOpexMetadataFile.Transfer.Manifest = new Noord.Hollands.Archief.Entities.Opex.manifest();
-                        currentOpexMetadataFile.Transfer.Manifest.Files = currentContent.Select(item => new Noord.Hollands.Archief.Entities.Opex.file
+                        if (currentOpexMetadataFile.Transfer.Manifest == null)
+                            currentOpexMetadataFile.Transfer.Manifest = new manifest();
+
+                        currentOpexMetadataFile.Transfer.Manifest.Files = currentContent.Select(item => new file
                         {
                             size = item.Length,
                             typeSpecified = true,
-                            type = item.Extension.Equals(".opex", StringComparison.InvariantCultureIgnoreCase) ? Noord.Hollands.Archief.Entities.Opex.fileType.metadata : Noord.Hollands.Archief.Entities.Opex.fileType.content,
+                            type = item.Extension.Equals(".opex", StringComparison.InvariantCultureIgnoreCase) ? fileType.metadata : fileType.content,
                             sizeSpecified = true,
                             Value = item.Name
                         }).ToArray();

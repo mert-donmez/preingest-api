@@ -168,7 +168,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
 
             using (System.IO.FileStream file = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read))
             {
-                using (MD5 md5 = new MD5CryptoServiceProvider())
+                using (MD5 md5 = MD5.Create())
                 {
                     byte[] retVal = md5.ComputeHash(file);
 
@@ -212,7 +212,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
 
             using (System.IO.FileStream file = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read))
             {
-                using (SHA1 sha1 = new SHA1CryptoServiceProvider())
+                using (SHA1 sha1 = SHA1.Create())
                 {
                     byte[] retVal = sha1.ComputeHash(file);
 
@@ -256,7 +256,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
 
             using (System.IO.FileStream file = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read))
             {
-                using (SHA256 sha1 = new SHA256Managed())
+                using (SHA256 sha1 = SHA256.Create())
                 {
                     byte[] retVal = sha1.ComputeHash(file);
 
@@ -300,7 +300,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Utilities
 
             using (System.IO.FileStream file = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read))
             {
-                using (SHA512 sha1 = new SHA512Managed())
+                using (SHA512 sha1 = SHA512.Create())
                 {
                     byte[] retVal = sha1.ComputeHash(file);
 

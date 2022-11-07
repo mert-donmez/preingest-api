@@ -475,7 +475,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             if (!directory.Exists)
                 throw new DirectoryNotFoundException(String.Format("Data folder '{0}' not found!", ApplicationSettings.DataFolderName));
 
-            var tarArchives = directory.GetFiles("*.*").Where(s => s.Extension.EndsWith(".tar") || s.Extension.EndsWith(".gz")).Select(item
+            var tarArchives = directory.GetFiles("*.*").Where(s => s.Extension.EndsWith(".tar", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".gz", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase)).Select(item
                         => new { Tar = item.Name, SessionId = ChecksumHelper.GeneratePreingestGuid(item.Name) }).ToList();
 
             TarFilename = tarArchives.First(item => item.SessionId == SessionGuid).Tar;

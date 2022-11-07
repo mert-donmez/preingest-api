@@ -81,7 +81,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
             if (!overwriteChecksumHashValue)
                 return;
 
-            var currentOpexMetadataFile = Preingest.WebApi.Utilities.DeserializerHelper.DeSerializeObjectFromXmlFile<Noord.Hollands.Archief.Entities.Opex.opexMetadata>(PolishOpexMetadata);
+            var currentOpexMetadataFile = Preingest.WebApi.Utilities.DeserializerHelper.DeSerializeObjectFromXmlFile<opexMetadata>(PolishOpexMetadata);
             FileInfo currentInfo = new FileInfo(this.KeyOpexLocation);
 
             string fixity = string.Empty;
@@ -98,8 +98,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
 
             fixity = Preingest.WebApi.Utilities.ChecksumHelper.CreateSHA256Checksum(binaryFilename, url);
 
-            currentOpexMetadataFile.Transfer = new Archief.Entities.Opex.transfer();
-            currentOpexMetadataFile.Transfer.Fixities = new Archief.Entities.Opex.fixity[] { new Archief.Entities.Opex.fixity { type = "SHA-256", value = fixity } };
+            currentOpexMetadataFile.Transfer = new transfer();
+            currentOpexMetadataFile.Transfer.Fixities = new fixity[] { new fixity { type = "SHA-256", value = fixity } };
 
             if(descriptiveMetadataList.Count > 0)
             {
@@ -112,7 +112,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
         }
         public void UpdateOpexFolderLevel()
         {
-            var currentOpexMetadataFile = Preingest.WebApi.Utilities.DeserializerHelper.DeSerializeObjectFromXmlFile<Noord.Hollands.Archief.Entities.Opex.opexMetadata>(PolishOpexMetadata);
+            var currentOpexMetadataFile = Preingest.WebApi.Utilities.DeserializerHelper.DeSerializeObjectFromXmlFile<opexMetadata>(PolishOpexMetadata);
             FileInfo currentInfo = new FileInfo(this.KeyOpexLocation);
 
             var files = currentInfo.Directory.GetFiles().ToList();
@@ -120,12 +120,12 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
             //overwrite
             if (files.Count > 0 && currentOpexMetadataFile.Transfer.Fixities == null)
             {
-                currentOpexMetadataFile.Transfer.Manifest = new Noord.Hollands.Archief.Entities.Opex.manifest();
-                currentOpexMetadataFile.Transfer.Manifest.Files = files.Select(item => new Noord.Hollands.Archief.Entities.Opex.file
+                currentOpexMetadataFile.Transfer.Manifest = new manifest();
+                currentOpexMetadataFile.Transfer.Manifest.Files = files.Select(item => new file
                 {
                     size = item.Length,
                     typeSpecified = true,
-                    type = item.Extension.Equals(".opex", StringComparison.InvariantCultureIgnoreCase) ? Noord.Hollands.Archief.Entities.Opex.fileType.metadata : Noord.Hollands.Archief.Entities.Opex.fileType.content,
+                    type = item.Extension.Equals(".opex", StringComparison.InvariantCultureIgnoreCase) ? fileType.metadata : fileType.content,
                     sizeSpecified = true,
                     Value = item.Name
                 }).ToArray();
@@ -134,7 +134,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
             if (directories.Count > 0)
             {
                 if (currentOpexMetadataFile.Transfer.Manifest == null)
-                    currentOpexMetadataFile.Transfer.Manifest = new Noord.Hollands.Archief.Entities.Opex.manifest();
+                    currentOpexMetadataFile.Transfer.Manifest = new manifest();
                 
                 currentOpexMetadataFile.Transfer.Manifest.Folders = directories.Select(item => item.Name).ToArray();
             }

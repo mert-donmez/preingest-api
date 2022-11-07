@@ -140,6 +140,12 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             content.Add(String.Format("P{0} - OPEX construeren", i.ToString("D2")), table);
                         }
                         break;
+                    case ValidationActionType.BuildNonMetadataOpexHandler:
+                        {
+                            DataTable table = LoadJson(action.Name, jsonDataFile);
+                            content.Add(String.Format("P{0} - OPEX construeren", i.ToString("D2")), table);
+                        }
+                        break;
                     case ValidationActionType.PolishHandler:
                         {
                             DataTable table = LoadJson(action.Name, jsonDataFile);

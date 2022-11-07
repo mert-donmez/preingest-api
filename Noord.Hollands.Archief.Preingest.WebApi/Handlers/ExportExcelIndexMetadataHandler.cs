@@ -1,7 +1,11 @@
 ﻿using ClosedXML.Excel;
+using ClosedXML.Excel.Drawings;
+using ClosedXML.Graphics;
+using SixLabors.Fonts;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
@@ -20,6 +24,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         public static string ExportToExcel(List<IndexMetadataHandler.ResultPair> data, List<IndexMetadataHandler.ProcessResultItem> errorsList)
         {
             var tempFile = String.Concat(System.IO.Path.GetTempFileName(), ".xlsx");
+
+            LoadOptions.DefaultGraphicEngine = new DefaultGraphicEngine("DejaVu Sans");
             using (XLWorkbook wb = new XLWorkbook())
             {
                 ExportExcelIndexMetadataHandler handler = new ExportExcelIndexMetadataHandler();

@@ -40,7 +40,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
             dynamic dataResults = null;
 
-            var tarArchives = directory.GetFiles("*.*").Where(s => s.Extension.EndsWith(".tar") || s.Extension.EndsWith(".gz"));
+            var tarArchives = directory.GetFiles("*.*").Where(s => s.Extension.EndsWith(".tar", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".gz", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase));
 
             tarArchives.ToList().ForEach(item =>
             {
@@ -153,7 +153,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             if (!directory.Exists)
                 throw new DirectoryNotFoundException(String.Format("Data folder '{0}' not found!", _settings.DataFolderName));            
 
-            var tarArchives = directory.GetFiles("*.*").Where(s => s.Extension.EndsWith(".tar") || s.Extension.EndsWith(".gz"));
+            var tarArchives = directory.GetFiles("*.*").Where(s => s.Extension.EndsWith(".tar", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".gz", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase));
             bool exists = tarArchives.Select(tar => ChecksumHelper.GeneratePreingestGuid(tar.Name)).Contains(guid);
             if (!exists)
                 throw new FileNotFoundException(String.Format("No tar container file found with GUID {0}!", guid));

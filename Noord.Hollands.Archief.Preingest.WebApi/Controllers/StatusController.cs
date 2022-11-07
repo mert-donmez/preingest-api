@@ -506,7 +506,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             if (fullDelete)
             {
                 var tarArchive = Directory.GetFiles(_settings.DataFolderName, "*.*").Select(i => new FileInfo(i)).Where(s
-                    => s.Extension.EndsWith(".tar") || s.Extension.EndsWith(".gz")).Select(item
+                    => s.Extension.EndsWith(".tar", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".gz", StringComparison.InvariantCultureIgnoreCase) || s.Extension.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase)).Select(item
                     => new
                     {
                         CollectionName = item.Name,

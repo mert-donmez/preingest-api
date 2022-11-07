@@ -1,7 +1,7 @@
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:x="http://www.openpreservationexchange.org/opex/v1.0"
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:x="http://www.openpreservationexchange.org/opex/v1.1"
 xmlns:t="http://www.nationaalarchief.nl/ToPX/v2.3"
 xmlns:m="https://www.nationaalarchief.nl/mdto"
-exclude-result-prefixes="x t m" xmlns="http://www.openpreservationexchange.org/opex/v1.0">
+exclude-result-prefixes="x t m" xmlns="http://www.openpreservationexchange.org/opex/v1.1">
 	<xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes"/>
 	<xsl:strip-space elements="*"/>
 	<xsl:template match="@* | node()">

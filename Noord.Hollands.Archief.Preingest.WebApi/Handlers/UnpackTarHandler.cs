@@ -5,7 +5,11 @@ using Mono.Unix;
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -13,9 +17,11 @@ using Noord.Hollands.Archief.Preingest.WebApi.Entities;
 using Noord.Hollands.Archief.Preingest.WebApi.EventHub;
 using Noord.Hollands.Archief.Preingest.WebApi.Entities.Event;
 using Noord.Hollands.Archief.Preingest.WebApi.Handlers.TreeView;
-using System.Net.Http;
-using System.Threading;
+
 using Newtonsoft.Json;
+
+using Org.BouncyCastle.Crypto.Prng;
+using DocumentFormat.OpenXml.Vml;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -64,15 +70,29 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 OnTrigger(new PreingestEventArgs { Description = "Container is expanding content.", Initiate = DateTimeOffset.Now, ActionType = PreingestActionStates.Executing, PreingestAction = eventModel });
 
                 Root dataResult;
-                using (HttpClient client = new HttpClient())
+                if (TargetCollection.EndsWith(".tar", StringComparison.InvariantCultureIgnoreCase) || TargetCollection.EndsWith(".tar.gz", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    client.Timeout = Timeout.InfiniteTimeSpan;
-                    HttpResponseMessage response = client.PostAsync(url, null).Result;
-                    response.EnsureSuccessStatusCode();
-                    dataResult = JsonConvert.DeserializeObject<Root>(response.Content.ReadAsStringAsync().Result);
+                    using (HttpClient client = new HttpClient())
+                    {
+                        client.Timeout = Timeout.InfiniteTimeSpan;
+                        HttpResponseMessage response = client.PostAsync(url, null).Result;
+                        response.EnsureSuccessStatusCode();
+                        dataResult = JsonConvert.DeserializeObject<Root>(response.Content.ReadAsStringAsync().Result);
 
-                    if (dataResult != null && dataResult.Result != null)
-                        output.AddRange(dataResult.Result);
+                        if (dataResult != null && dataResult.Result != null)
+                            output.AddRange(dataResult.Result);
+                    }
+                }
+                if (TargetCollection.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    List<string> entriesDestList = new List<string>();
+                    using (ZipArchive zipArchive = (ZipArchive)ZipFile.OpenRead(TargetCollection))
+                    {
+                        entriesDestList.AddRange(zipArchive.Entries.Select(item => item.FullName).ToArray());
+                        zipArchive.ExtractToDirectory(TargetFolder);                        
+                    }
+                    dataResult = new Root { Result = entriesDestList };
+                    output.AddRange(dataResult.Result);
                 }
                 
                 var fileInformation = new FileInfo(TargetCollection);

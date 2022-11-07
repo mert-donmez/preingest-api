@@ -92,10 +92,10 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     Logger.LogInformation("Prewashing/transformation : {0}", file);
                     string requestUri = GetProcessingUrl(ApplicationSettings.XslWebServerName, ApplicationSettings.XslWebServerPort, file);
 
-                    using (WebClient wc = new WebClient())
-                    {
-                        wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-                        string result = wc.UploadString(requestUri, urlEncodedString);
+                    using (HttpClient httpClient = new HttpClient())
+                    {                     
+                        var response = httpClient.PostAsync(requestUri, formUrlEncodedContent).Result;
+                        var result = response.Content.ReadAsStringAsync().Result;
 
                         XDocument xDoc = XDocument.Parse(result);
                         try
