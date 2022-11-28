@@ -42,7 +42,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// Gets the collections.
         /// </summary>
         /// <returns></returns>
-        [HttpGet("collections", Name = "Get collections of tar/tar.gz files.", Order = 0)]
+        [HttpGet("collections", Name = "GetListCollections", Order = 0)]
         public IActionResult GetCollections()
         {
             dynamic dataResults = null;            
@@ -71,7 +71,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="guid">The unique identifier.</param>
         /// <returns></returns>
-        [HttpGet("collection/{guid}", Name = "Get specific collection of tar/tar.gz file.", Order = 1)]
+        [HttpGet("collection/{guid}", Name = "GetSingleCollection", Order = 1)]
         public IActionResult GetCollection(Guid guid)
         {
             var directory = new DirectoryInfo(_settings.DataFolderName);
@@ -110,7 +110,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="guid">The unique identifier.</param>
         /// <param name="json">The json.</param>
         /// <returns></returns>
-        [HttpGet("json/{guid}/{json}", Name = "Get json results from a session.", Order = 2)]
+        [HttpGet("json/{guid}/{json}", Name = "GetJsonResults", Order = 2)]
         public IActionResult GetJson(Guid guid, string json)
         {
             if (guid == Guid.Empty)
@@ -143,7 +143,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="guid">The unique identifier.</param>
         /// <param name="file">The file.</param>
         /// <returns></returns>
-        [HttpGet("report/{guid}/{file}", Name = "Get a report as a file from a session.", Order = 3)]
+        [HttpGet("report/{guid}/{file}", Name = "GetReportByFilename", Order = 3)]
         public IActionResult GetReport(Guid guid, string file)
         {
             if (guid == Guid.Empty)
@@ -190,7 +190,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// Gets the stylesheet list.
         /// </summary>
         /// <returns></returns>
-        [HttpGet("stylesheets", Name = "Get a list of files from prewash folder.", Order = 4)]
+        [HttpGet("stylesheets", Name = "GetListOfFilesFromPrewash", Order = 4)]
         public IActionResult GetStylesheetList()
         {
             if (String.IsNullOrEmpty(_settings.PreWashFolder))
@@ -212,7 +212,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// Gets the schema list.
         /// </summary>
         /// <returns></returns>
-        [HttpGet("schemas", Name = "Get a list of schemas.", Order = 5)]
+        [HttpGet("schemas", Name = "GetListOfSchemas", Order = 5)]
         public IActionResult GetSchemaList()
         {
             var dictionary = Schema.SchemaHandler.GetSchemaList();
@@ -223,7 +223,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             }).OrderBy(item => item.Name).ToArray());
         }
 
-        [HttpGet("view_structure/{guid}", Name = "Get collection structure of a session ID.", Order = 6)]
+        [HttpGet("view_structure/{guid}", Name = "GetCollectionStructure", Order = 6)]
         public async System.Threading.Tasks.Task<IActionResult> GetCollectionStructure(Guid guid)
         {
             var directory = new DirectoryInfo(Path.Combine(_settings.DataFolderName, guid.ToString()));
@@ -244,7 +244,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(rootModel);
         }
 
-        [HttpGet("item_content/{base64EncodedValue}", Name = "Get collection item of a session ID.", Order = 7)]
+        [HttpGet("item_content/{base64EncodedValue}", Name = "GetCollectionItemContent", Order = 7)]
         public async System.Threading.Tasks.Task<IActionResult> GetCollectionItem(String base64EncodedValue)
         {
             if (String.IsNullOrEmpty(base64EncodedValue))
@@ -263,7 +263,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(rootModel);
         }
 
-        [HttpGet("item_properties/{base64EncodedValue}", Name = "Get sidecar structure from a session.", Order = 6)]
+        [HttpGet("item_properties/{base64EncodedValue}", Name = "GetSidecarItemProperties", Order = 6)]
         public async System.Threading.Tasks.Task<IActionResult> GetCollectionItemProps(String base64EncodedValue)
         {
             if (String.IsNullOrEmpty(base64EncodedValue))

@@ -37,7 +37,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             _preingestCollection = preingestCollection;
         }
 
-        [HttpPost("startplan/{guid}", Name = "Auto run preingest by worker service", Order = 1)]
+        [HttpPost("startplan/{guid}", Name = "StartPreingestPlan", Order = 1)]
         public IActionResult StartPlan(Guid guid, [FromBody] BodyExecutionPlan workflow)
         {
             if (guid == Guid.Empty)
@@ -165,7 +165,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return Ok();
         }
 
-        [HttpDelete("cancelplan/{guid}", Name = "Delete an autorun preingest in worker service by GUID", Order = 2)]
+        [HttpDelete("cancelplan/{guid}", Name = "CancelPreingestPlan", Order = 2)]
         public IActionResult CancelPlan(Guid guid)
         {
             if (guid == Guid.Empty)

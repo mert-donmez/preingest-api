@@ -31,7 +31,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             _preingestCollection = preingestCollection;            
         }
 
-        [HttpGet("check", Name = "API service check", Order = 0)]
+        [HttpGet("check", Name = "ServiceHealthCheck", Order = 0)]
         public IActionResult Check()
         {
             JsonResult result = null;
@@ -63,7 +63,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return result;
         }       
 
-        [HttpPost("calculate/{guid}", Name = "Collection checksum calculation. Options : MD5, SHA1, SHA224, SHA256, SHA384, SHA512", Order = 1)]
+        [HttpPost("calculate/{guid}", Name = "CalculateCollectionChecksum", Order = 1)]
         public IActionResult CollectionChecksumCalculation(Guid guid, [FromBody] BodyChecksum checksum)
         {
             _logger.LogInformation("Enter CollectionChecksumCalculation.");
@@ -106,7 +106,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         }
 
         //Voorbereiding  
-        [HttpPost("unpack/{guid}", Name = "Unpack tar collection", Order = 2)]
+        [HttpPost("unpack/{guid}", Name = "ExpandCollectionArchive", Order = 2)]
         public IActionResult Unpack(Guid guid)
         {
             _logger.LogInformation("Enter Unpack.");
@@ -141,7 +141,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = "Expand archive started", SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("virusscan/{guid}", Name = "Virusscan check", Order = 3)]
+        [HttpPost("virusscan/{guid}", Name = "RunVirusMalwareScan", Order = 3)]
         public IActionResult VirusScan(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -177,7 +177,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Virusscan started."), SessionId = guid, ActionId = processId });
         }
                 
-          [HttpPost("naming/{guid}", Name = "Naming check", Order = 4)]
+        [HttpPost("naming/{guid}", Name = "NamingConventionValidation", Order = 4)]
         public IActionResult Naming(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -212,7 +212,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Folder(s) and file(s) naming check started."), SessionId = guid, ActionId = processId });
         }
        
-        [HttpPost("sidecar/{guid}", Name = "Sidecar check", Order = 5)]
+        [HttpPost("sidecar/{guid}", Name = "SidecarValidation", Order = 5)]
         public IActionResult Sidecar(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -246,7 +246,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Structure sidecar check started."), SessionId = guid, ActionId = processId });
         }              
  
-        [HttpPost("profiling/{guid}", Name = "Droid create profile", Order = 6)]
+        [HttpPost("profiling/{guid}", Name = "CreateDroidProfile", Order = 6)]
         public IActionResult Profiling(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -278,7 +278,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Droid profiling is started."), SessionId = guid, ActionId = actionId });
         }
 
-        [HttpPost("exporting/{guid}", Name = "Droid exporting result (CSV)", Order = 7)]
+        [HttpPost("exporting/{guid}", Name = "ExportingDroidResultCSV", Order = 7)]
         public IActionResult Exporting(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -310,7 +310,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Droid exporting (CSV) is started."), SessionId = guid, ActionId = actionId });
         }       
 
-        [HttpPost("reporting/{type}/{guid}", Name = "Droid reporting PDF/Droid (XML)/Planets (XML)", Order = 8)]
+        [HttpPost("reporting/{type}/{guid}", Name = "DroidReportingPDFDroidXMLPlanetsXML", Order = 8)]
         public IActionResult Reporting(Guid guid, String type)
         {
             if (guid == Guid.Empty)
@@ -358,7 +358,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Droid reporting ({0}) is started.", style), SessionId = guid, ActionId = actionId });
         }
 
-        [HttpPut("signature/update", Name = "Droid signature update", Order = 9)]
+        [HttpPut("signature/update", Name = "DroidSignatureUpdate", Order = 9)]
         public IActionResult SignatureUpdate()
         {
             _logger.LogInformation("Enter SignatureUpdate.");
@@ -387,7 +387,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return Ok();
         }
 
-        [HttpPost("greenlist/{guid}", Name = "Greenlist check", Order = 10)]
+        [HttpPost("greenlist/{guid}", Name = "PreferenceGreenListComparisonCheck", Order = 10)]
         public IActionResult Greenlist(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -420,7 +420,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Greenlist check is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("encoding/{guid}", Name = "Encoding check .metadata files", Order = 11)]
+        [HttpPost("encoding/{guid}", Name = "EncodingMetadataFilesCheck", Order = 11)]
         public IActionResult Encoding(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -454,7 +454,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Encoding UTF-8 .metadata files check is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("validate/{guid}", Name = "Validate .metadata files", Order = 12)]
+        [HttpPost("validate/{guid}", Name = "ValidateMetadataContent", Order = 12)]
         public IActionResult ValidateMetadata(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -488,7 +488,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Validate metadata files is started."), SessionId = guid, ActionId = processId });
         } 
 
-        [HttpPost("excelcreator/{guid}", Name = "Generate Excel report", Order = 13)]
+        [HttpPost("excelcreator/{guid}", Name = "GenerateExcelReport", Order = 13)]
         public IActionResult CreateExcel(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -523,7 +523,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Excel creator is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPut("settings/{guid}", Name = "Save preingest extra setting(s)", Order = 14)]
+        [HttpPut("settings/{guid}", Name = "SavePreingestSettings", Order = 14)]
         public IActionResult PutSettings(Guid guid, [FromBody] BodySettings settings)
         {
             if (guid == Guid.Empty)
@@ -558,7 +558,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Settings are stored."), SessionId = guid, ActionId = processId });
         }
  
-        [HttpPost("prewash/{guid}", Name = "Prewash .metadata files.", Order = 15)]
+        [HttpPost("prewash/{guid}", Name = "PrewashMetadataFiles", Order = 15)]
         public IActionResult PreWashMetadata(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -591,7 +591,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Prewash started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("indexing/{guid}", Name = "Index metadata files and save the result in an Excel report", Order = 16)]
+        [HttpPost("indexing/{guid}", Name = "IndexMetadataFilesToExcel", Order = 16)]
         public IActionResult IndexMetadataFiles(Guid guid, [FromBody] String[] extraXmlRootNodeNames)
         {
             if (guid == Guid.Empty)
@@ -627,7 +627,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Indexing metadata files is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("detection/{guid}", Name = "Detect files with password protection", Order = 17)]
+        [HttpPost("detection/{guid}", Name = "DetectFilesWithPasswordProtection", Order = 17)]
         public IActionResult DetectPasswordProtection(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -662,7 +662,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Detect files with password protection is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("pronom/{guid}", Name = "Update metadata (bestand) files with PRONOM values", Order = 18)]
+        [HttpPost("pronom/{guid}", Name = "UpdateMetadataFilesWithPRONOM", Order = 18)]
         public IActionResult UpdateWithPronom(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -697,7 +697,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Update metadata (bestand) files with PRONOM values is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("binaries/{guid}", Name = "Validate non-metadata files looking for ZBF and mismatch (PRONOM)", Order = 19)]
+        [HttpPost("binaries/{guid}", Name = "LookingForZBFPlusPRONOMMismatch", Order = 19)]
         public IActionResult ValidateBinaries(Guid guid)
         {
             if (guid == Guid.Empty)

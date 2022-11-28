@@ -84,7 +84,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
             //overwrite
             if (files.Count > 0)
             {                
-                currentOpexMetadataFile.Transfer.Manifest.Files = files.Select(item => new file
+                currentOpexMetadataFile.Transfer.Manifest.Files = files.Select(item => new fileItem
                 {
                     size = item.Length,
                     typeSpecified = true,

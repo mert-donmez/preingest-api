@@ -56,7 +56,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="actionGuid">The action unique identifier.</param>
         /// <returns></returns>
-        [HttpGet("action/{actionGuid}", Name = "Retrieve an action from a preingest session", Order = 1)]
+        [HttpGet("action/{actionGuid}", Name = "RetrieveActionRecordByGuid", Order = 1)]
         public IActionResult GetAction(Guid actionGuid)
         {
             if (actionGuid == Guid.Empty)
@@ -114,7 +114,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="folderSessionGuid">The folder session unique identifier.</param>
         /// <returns></returns>
-        [HttpGet("actions/{folderSessionGuid}", Name = "Retrieve all actions from a preingest session", Order = 2)]
+        [HttpGet("actions/{folderSessionGuid}", Name = "RetrieveAllActionsFromCollection", Order = 2)]
         public IActionResult GetActions(Guid folderSessionGuid)
         {
             if (folderSessionGuid == Guid.Empty)
@@ -172,7 +172,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="folderSessionGuid">The folder session unique identifier.</param>
         /// <param name="data">The data.</param>
         /// <returns></returns>
-        [HttpPost("new/{folderSessionGuid}", Name = "Add an action", Order = 3)]
+        [HttpPost("new/{folderSessionGuid}", Name = "AddActionForCollection", Order = 3)]
         public IActionResult AddProcessAction(Guid folderSessionGuid, [FromBody] BodyNewAction data)
         {
             if (folderSessionGuid == Guid.Empty)
@@ -227,7 +227,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="actionGuid">The action unique identifier.</param>
         /// <param name="data">The data.</param>
         /// <returns></returns>
-        [HttpPut("update/{actionGuid}", Name = "Update an action status and summary", Order = 4)]
+        [HttpPut("update/{actionGuid}", Name = "UpdateActionByGuid", Order = 4)]
         public IActionResult UpdateProcessAction(Guid actionGuid, [FromBody] BodyUpdate data)
         {
             if (actionGuid == Guid.Empty)
@@ -276,7 +276,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="actionGuid">The action unique identifier.</param>
         /// <returns></returns>
-        [HttpPost("start/{actionGuid}", Name = "Add a start status", Order = 5)]
+        [HttpPost("start/{actionGuid}", Name = "AddStartStatusByGuid", Order = 5)]
         public IActionResult AddStartState(Guid actionGuid)
         {
             if (actionGuid == Guid.Empty)
@@ -296,7 +296,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="actionGuid">The action unique identifier.</param>
         /// <returns></returns>
-        [HttpPost("completed/{actionGuid}", Name = "Add a completed status", Order = 6)]
+        [HttpPost("completed/{actionGuid}", Name = "AddCompletedStatusByGuid", Order = 6)]
         public IActionResult AddCompletedState(Guid actionGuid)
         {
             if (actionGuid == Guid.Empty)
@@ -317,7 +317,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="actionGuid">The action unique identifier.</param>
         /// <param name="failMessage">The fail message.</param>
         /// <returns></returns>
-        [HttpPost("failed/{actionGuid}", Name = "Add a failed status", Order = 7)]
+        [HttpPost("failed/{actionGuid}", Name = "AddFailedStatusByGuid", Order = 7)]
         public IActionResult AddFailedState(Guid actionGuid, [FromBody] BodyMessage failMessage)
         {
             if (actionGuid == Guid.Empty)
@@ -341,7 +341,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="folderSessionGuid">The folder session unique identifier.</param>
         /// <returns></returns>
-        [HttpDelete("reset/{folderSessionGuid}", Name = "Clear data for a session folder", Order = 8)]
+        [HttpDelete("reset/{folderSessionGuid}", Name = "ClearHistoryDataCollection", Order = 8)]
         public IActionResult ResetSession(Guid folderSessionGuid)
         {
             return DeleteSession(folderSessionGuid);
@@ -352,7 +352,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="folderSessionGuid">The folder session unique identifier.</param>
         /// <returns></returns>
-        [HttpDelete("remove/{folderSessionGuid}", Name = "Remove session folder and clear the data for session folder", Order = 9)]
+        [HttpDelete("remove/{folderSessionGuid}", Name = "RemoveHistoryDataForCollection", Order = 9)]
         public IActionResult RemoveSession(Guid folderSessionGuid)
         {
             return DeleteSession(folderSessionGuid, true);
@@ -363,7 +363,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="message">The message.</param>
         /// <returns></returns>
-        [HttpPost("notify", Name = "Notify the client about an event", Order = 10)]
+        [HttpPost("notify", Name = "NotifyClientOfAnEvent", Order = 10)]
         public IActionResult SendNotification([FromBody] BodyEventMessageBody message)
         {
             if (message == null)

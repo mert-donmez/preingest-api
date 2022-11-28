@@ -14,6 +14,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 using static Noord.Hollands.Archief.Preingest.WebApi.Handlers.GreenListHandler;
+using ClosedXML.Graphics;
 
 namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 {
@@ -427,9 +428,9 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         private static FileInfo ExportToExcel(Dictionary<String, DataTable> content, FileInfo excel = null)
         {
             var tempFile = String.Concat(System.IO.Path.GetTempFileName(), ".xlsx");
-
+            LoadOptions.DefaultGraphicEngine = new DefaultGraphicEngine("DejaVu Sans");
             if (excel == null)
-            {
+            {                
                 using (XLWorkbook wb = new XLWorkbook())
                 {                    
                     foreach (KeyValuePair<String, DataTable> sheet in content)

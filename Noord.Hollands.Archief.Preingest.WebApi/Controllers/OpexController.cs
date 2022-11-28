@@ -47,7 +47,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="guid">The unique identifier.</param>
         /// <param name="setting">The setting.</param>
         /// <returns></returns>
-        [HttpPut("buildopex/{guid}", Name = "Build Opex for ingest.", Order = 1)]
+        [HttpPut("buildopex/{guid}", Name = "BuildOpexForIngest", Order = 1)]
         public IActionResult BuildOpex(Guid guid, [FromBody] Inheritance setting)
         {
             if (guid == Guid.Empty)
@@ -86,7 +86,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="guid">The unique identifier.</param>
         /// <returns></returns>
-        [HttpGet("showbucket/{guid}", Name = "Show the list of the bucket content.", Order = 2)]
+        [HttpGet("showbucket/{guid}", Name = "ShowBucketContent", Order = 2)]
         public IActionResult ShowBucket(Guid guid)
         {
             _logger.LogInformation("Enter ShowBucket.");
@@ -122,7 +122,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="guid">The unique identifier.</param>
         /// <returns></returns>
-        [HttpDelete("clearbucket/{guid}", Name = "Clear the bucket.", Order = 3)]
+        [HttpDelete("clearbucket/{guid}", Name = "ClearBucket", Order = 3)]
         public IActionResult ClearBucket(Guid guid)
         {
             _logger.LogInformation("Enter ClearBucket.");
@@ -158,7 +158,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="guid">The unique identifier.</param>
         /// <returns></returns>
-        [HttpPost("upload2bucket/{guid}", Name = "Upload an Opex collection to the bucket", Order = 4)]
+        [HttpPost("upload2bucket/{guid}", Name = "Upload2Bucket", Order = 4)]
         public IActionResult Upload2Bucket(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -198,7 +198,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// <param name="guid">The unique identifier.</param>
         /// <param name="hashType">Type of the hash.</param>
         /// <returns></returns>
-        [HttpPost("checksum/{guid}", Name = "Run checksum on all files.", Order = 5)]
+        [HttpPost("checksum/{guid}", Name = "RunChecksumWithEveryFiles", Order = 5)]
         public IActionResult RunChecksum(Guid guid, [FromBody] Algorithm hashType)
         {
             if (guid == Guid.Empty)
@@ -238,7 +238,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
         /// </summary>
         /// <param name="guid">The unique identifier.</param>
         /// <returns></returns>
-        [HttpPost("polish/{guid}", Name = "Polish Opex files by using XSLT transformation.", Order = 6)]
+        [HttpPost("polish/{guid}", Name = "PolishOpexFiles", Order = 6)]
         public IActionResult Polish(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -272,7 +272,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Polish run started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPut("buildnonmetadataopex/{guid}", Name = "Build Opex (non metadata) for ingest.", Order = 7)]
+        [HttpPut("buildnonmetadataopex/{guid}", Name = "BuildOpexNonMetadata", Order = 7)]
         public IActionResult BuildOpexNonMetadata(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -304,8 +304,38 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             _logger.LogInformation("Exit BuildOpexNonMetadata.");
             return new JsonResult(new { Message = String.Format("Build Opex started."), SessionId = guid, ActionId = processId });
         }
-    
+
+        [HttpPut("revert/{guid}", Name = "RevertCollection", Order = 8)]
+        public IActionResult Revert(Guid guid)
+        {
+            if (guid == Guid.Empty)
+                return Problem("Empty GUID is invalid.");
+
+            _logger.LogInformation("Enter Revert.");
+
+            //database process id
+            Guid processId = Guid.NewGuid();
+            try
+            {
+                Task.Run(() =>
+                {
+                    using (RevertCollectionHandler handler = new RevertCollectionHandler(_settings, _eventHub, _preingestCollection))
+                    {
+                        handler.Logger = _logger;
+                        handler.SetSessionGuid(guid);
+                        processId = handler.AddProcessAction(processId, typeof(RevertCollectionHandler).Name, String.Format("Reverting collection ID: {0}", guid), String.Concat(typeof(RevertCollectionHandler).Name, ".json"));
+                        _logger.LogInformation("Execute handler ({0}) with GUID {1}.", typeof(RevertCollectionHandler).Name, guid.ToString());
+                        handler.Execute();
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An exception was thrown in {0}: '{1}'.", typeof(RevertCollectionHandler).Name, e.Message);
+                return ValidationProblem(e.Message, typeof(RevertCollectionHandler).Name);
+            }
+            _logger.LogInformation("Exit Revert.");
+            return new JsonResult(new { Message = String.Format("Reverting collection started."), SessionId = guid, ActionId = processId });
+        }
     }
-
-
 }

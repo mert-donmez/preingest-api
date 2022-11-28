@@ -155,7 +155,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers.OPEX
                         if (currentOpexMetadataFile.Transfer.Manifest == null)
                             currentOpexMetadataFile.Transfer.Manifest = new manifest();
 
-                        currentOpexMetadataFile.Transfer.Manifest.Files = currentContent.Select(item => new file
+                        currentOpexMetadataFile.Transfer.Manifest.Files = currentContent.Select(item => new fileItem
                         {
                             size = item.Length,
                             typeSpecified = true,

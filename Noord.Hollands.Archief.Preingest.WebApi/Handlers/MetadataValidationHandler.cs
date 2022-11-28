@@ -64,7 +64,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         public override void Execute()
         {
             var eventModel = CurrentActionProperties(TargetCollection, this.GetType().Name);
-            OnTrigger(new PreingestEventArgs { Description="Start validate .metadata files.", Initiate = DateTimeOffset.Now, ActionType = PreingestActionStates.Started, PreingestAction = eventModel });
+            OnTrigger(new PreingestEventArgs { Description = "Start validate .metadata files.", Initiate = DateTimeOffset.Now, ActionType = PreingestActionStates.Started, PreingestAction = eventModel });
 
             var anyMessages = new List<String>();
             bool isSucces = false;
@@ -93,7 +93,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         ValidateVoorwaardelijkeControleElementDekkingInTijd(file, schemaResult);
                     }
                     if (this.IsToPX)
-                    {   
+                    {
                         ValidateOpenbaarheidRegels(file, schemaResult);
                         ValidateOpenbaarheidDatumOfPeriodeRegels(file, schemaResult);
                         //2
@@ -118,7 +118,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
                 isSucces = true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 isSucces = false;
                 Logger.LogError(e, "An exception occured in metadata validation!");
@@ -134,7 +134,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 eventModel.ActionResult.ResultValue = PreingestActionResults.Failed;
                 eventModel.Properties.Messages = anyMessages.ToArray();
 
-                OnTrigger(new PreingestEventArgs { Description= "An exception occured in metadata validation!", Initiate = DateTimeOffset.Now, ActionType = PreingestActionStates.Failed, PreingestAction = eventModel });
+                OnTrigger(new PreingestEventArgs { Description = "An exception occured in metadata validation!", Initiate = DateTimeOffset.Now, ActionType = PreingestActionStates.Failed, PreingestAction = eventModel });
             }
             finally
             {
@@ -153,12 +153,12 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             try
             {
                 XmlDocument xml = new XmlDocument();
-                xml.Load(file);                
+                xml.Load(file);
 
                 var nsmgr = new XmlNamespaceManager(xml.NameTable);
                 if (this.IsMDTO)
                     nsmgr.AddNamespace("m", "https://www.nationaalarchief.nl/mdto");
-                if(this.IsToPX)
+                if (this.IsToPX)
                     nsmgr.AddNamespace("t", "http://www.nationaalarchief.nl/ToPX/v2.3");
 
                 //XmlNodeList xNodeList = this.IsToPX ? xml.SelectNodes("/t:ToPX//*/text()", nsmgr) : xml.SelectNodes("/m:MDTO//*/text()", nsmgr);
@@ -235,7 +235,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     string termijnLooptijd = item.beperkingGebruikTermijn.termijnLooptijd;
                     string termijnEinddatum = item.beperkingGebruikTermijn.termijnEinddatum;
 
-                    DateTime? parseOut = ParseTermijnDatum(termijnEinddatum); 
+                    DateTime? parseOut = ParseTermijnDatum(termijnEinddatum);
 
                     DateTime? dtTermijnStartdatumLooptijd = (termijnStartdatumLooptijd.Value == DateTime.MinValue) ? null : termijnStartdatumLooptijd.Value;
                     TimeSpan? tsTermijnLooptijd = String.IsNullOrEmpty(termijnLooptijd) ? null : XmlConvert.ToTimeSpan(termijnLooptijd);
@@ -271,7 +271,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         int result = DateTime.Compare(dtTermijnStartdatumLooptijd.Value, dtTermijnEinddatum.Value);
 
                         if (result < 0)
-                        {                            
+                        {
                             //Uitgeschakeld bevinding #4 uit test 10-05-2022 op verzoek van Mark. 
                             //currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is eerder dan termijnEinddatum"); //relationship = "is eerder dan";
                         }
@@ -283,7 +283,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         {
                             currentErrorMessages.Add("Melding: termijnStartdatumLooptijd is later dan termijnEinddatum");  //relationship = "is later dan";
                         }
-                         
+
                         currentErrorMessages.Add("Melding: er is geen waarde opgegeven voor het element 'termijnLooptijd',  er is wel een 'termijnStartdatumLooptijd' en 'termijnEinddatum'");
                         schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                     }
@@ -344,8 +344,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             if (isSuccess)
                 return parseOut;
 
-            string yearFormat = @"\d{4}";
-            string yeahMonthFormat = @"\d{4}-\d{2}";
+            string yearFormat = @"^\d{4}$";
+            string yeahMonthFormat = @"^\d{4}-\d{2}$";
 
             bool isYear = Regex.IsMatch(termijnDatum, yearFormat);
             bool isYearMonth = Regex.IsMatch(termijnDatum, yeahMonthFormat);
@@ -588,7 +588,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 schemaResult.ErrorMessages = currentErrorMessages.ToArray();
             }
         }
-        
+
         /// <summary>
         /// Validates metadata with XSD schema. For ToPX and MDTO.
         /// </summary>
@@ -677,7 +677,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     MetadataFilename = file,
                     RequestUri = requestUri
                 };
-            }           
+            }
             return validation;
         }
 
@@ -689,7 +689,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         private void ValidateMetBeperkingenLijstAuteursWet1995(string file, MetadataValidationItem schemaResult)
         {
             BeperkingCategorie categorie = BeperkingCategorie.OPENBAARHEID_ARCHIEFWET_1995;
-            BeperkingResult validation = new BeperkingResult() { IsSuccess = null, Results = new string[0] { } } ;
+            BeperkingResult validation = new BeperkingResult() { IsSuccess = null, Results = new string[0] { } };
             var errorMessages = new List<String>();
 
             string url = String.Format("http://{0}:{1}/begrippenlijst/{2}", ApplicationSettings.UtilitiesServerName, ApplicationSettings.UtilitiesServerPort, categorie.ToString());
@@ -755,7 +755,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             finally
             {
                 schemaResult.IsConfirmBegrippenLijst = validation.IsSuccess;
-                List<String> messages = schemaResult.ErrorMessages.ToList();                
+                List<String> messages = schemaResult.ErrorMessages.ToList();
                 messages.AddRange(validation.Results);
                 schemaResult.ErrorMessages = messages.ToArray();
             }
@@ -794,7 +794,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     bool beperkt = item.beperkingGebruikType.begripLabel.Contains("beperkt", StringComparison.InvariantCultureIgnoreCase);
 
                     //alleen openbaar
-                    if(openbaar && !beperkt)
+                    if (openbaar && !beperkt)
                     {
 #pragma warning disable
                         //DateTime is nooit een NULL. Hoog waarschijnlijk al met schema validatie al gedetecteerd....
@@ -807,7 +807,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         }
                     }
                     //beperkt openbaar
-                    if(openbaar && beperkt)
+                    if (openbaar && beperkt)
                     {
 #pragma warning disable
 
@@ -816,7 +816,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 #pragma warning enable
                         //xsd:gYear xsd:gYearMonth xsd:date
                         bool eindHasValue = !String.IsNullOrEmpty(item.beperkingGebruikTermijn.termijnEinddatum);
- 
+
                         //one of both is missing then....
                         if (!eindHasValue)
                         {
@@ -833,8 +833,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (startHasValue && eindHasValue)
                         {
                             DateTime parseOut = DateTime.MinValue;
-                            string yearFormat = @"\d{4}";
-                            string yeahMonthFormat = @"\d{4}-\d{2}";
+                            string yearFormat = @"^\d{4}$";
+                            string yeahMonthFormat = @"^\d{4}-\d{2}$";
 
                             bool isDate = DateTime.TryParse(item.beperkingGebruikTermijn.termijnEinddatum, out parseOut);
                             bool isYear = Regex.IsMatch(item.beperkingGebruikTermijn.termijnEinddatum, yearFormat);
@@ -859,7 +859,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         }
                     }
 
-                });               
+                });
             }
             catch (Exception e)
             {
@@ -902,7 +902,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
                 if (archiefOrDossier)
                 {
-                    if(aggregatie.dekking == null)
+                    if (aggregatie.dekking == null)
                     {
                         var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                         currentErrorMessages.Add("Het element 'dekking' is niet aanwezig.");
@@ -912,7 +912,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     {
                         aggregatie.dekking.ToList().ForEach(dekkingInTijdItem =>
                         {
-                            if( dekkingInTijdItem.inTijd == null)
+                            if (dekkingInTijdItem.inTijd == null)
                             {
                                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                                 currentErrorMessages.Add("Het element 'dekking/InTijd' is niet aanwezig.");
@@ -922,7 +922,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                             {
                                 bool isBegin = (dekkingInTijdItem.inTijd.begin == null);
                                 bool isEind = (dekkingInTijdItem.inTijd.eind == null);
-                                if(!isBegin && isEind)
+                                if (!isBegin && isEind)
                                 {
                                     //wel begin, geen eind
                                     var currentErrorMessages = schemaResult.ErrorMessages.ToList();
@@ -930,11 +930,11 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     schemaResult.ErrorMessages = currentErrorMessages.ToArray();
 
                                 }
-                                if(isBegin && !isEind)
+                                if (isBegin && !isEind)
                                 {
                                     //geen begin, wel eind
                                     var currentErrorMessages = schemaResult.ErrorMessages.ToList();
-                                    currentErrorMessages.Add(String.Format("Het subelement 'begin' ontbreekt voor het element 'dekking/inTijd'."));                                    
+                                    currentErrorMessages.Add(String.Format("Het subelement 'begin' ontbreekt voor het element 'dekking/inTijd'."));
                                     schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                                 }
                                 if (isBegin && isEind)
@@ -948,11 +948,11 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     DateTime beginParseDate = DateTime.MinValue;
                                     DateTime eindParseDate = DateTime.MinValue;
 
-                                    if(dekkingInTijdItem.inTijd.eind == null || dekkingInTijdItem.inTijd.begin == null)
+                                    if (dekkingInTijdItem.inTijd.eind == null || dekkingInTijdItem.inTijd.begin == null)
                                     {
                                         var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                                         currentErrorMessages.Add("Waarde ontleden voor het element 'begin' of 'eind' in het element 'dekking/inTijd' niet gelukt.");
-                                        if(dekkingInTijdItem.inTijd.eind == null)
+                                        if (dekkingInTijdItem.inTijd.eind == null)
                                             currentErrorMessages.Add("Element 'eind' in het element 'dekking/inTijd' is niet aanwezig.");
                                         if (dekkingInTijdItem.inTijd.begin == null)
                                             currentErrorMessages.Add("Element 'begin' in het element 'dekking/inTijd' is niet aanwezig.");
@@ -961,7 +961,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     }
 
                                     String beginDateWaarde = string.Empty;
-                                    if(dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeDatum)
+                                    if (dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeDatum)
                                         beginDateWaarde = (dekkingInTijdItem.inTijd.begin.Item as datumOfJaarTypeDatum).Value.ToString();
                                     if (dekkingInTijdItem.inTijd.begin.Item is datumOfJaarTypeDatumEnTijd)
                                         beginDateWaarde = (dekkingInTijdItem.inTijd.begin.Item as datumOfJaarTypeDatumEnTijd).Value.ToString();
@@ -976,8 +976,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                                     if (dekkingInTijdItem.inTijd.eind.Item is datumOfJaarTypeJaar)
                                         eindDateWaarde = (dekkingInTijdItem.inTijd.eind.Item as datumOfJaarTypeJaar).Value.ToString();
 
-                                    string yearFormat = @"\d{4}";
-                                    string yeahMonthFormat = @"\d{4}-\d{2}";
+                                    string yearFormat = @"^\d{4}$";
+                                    string yeahMonthFormat = @"^\d{4}-\d{2}$";
 
                                     bool isDateBegin = DateTime.TryParse(beginDateWaarde, out beginParseDate);
                                     bool isYearBegin = Regex.IsMatch(beginDateWaarde, yearFormat);
@@ -1065,17 +1065,17 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
                 if (isValid)
                 {
-                    if(informatieobject.dekkingInTijd != null)
+                    if (informatieobject.dekkingInTijd != null)
                     {
                         string looptijdExpression = @"^(Looptijd$)";
                         int count = informatieobject.dekkingInTijd.Count(item => (item.dekkingInTijdType != null && !String.IsNullOrEmpty(item.dekkingInTijdType.begripLabel)) && Regex.IsMatch(item.dekkingInTijdType.begripLabel.Trim(), looptijdExpression, RegexOptions.IgnoreCase | RegexOptions.Singleline));
-                        if(count < 1)
+                        if (count < 1)
                         {
                             var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                             currentErrorMessages.Add(@"Het element 'dekkingInTijd/begripLabel' met de waarde 'Looptijd' ontbreekt.");
                             schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                         }
-                        if(count > 1)
+                        if (count > 1)
                         {
                             var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                             currentErrorMessages.Add("Er mag maximaal 1 keer het element 'dekkingInTijd/begripLabel' met 'Looptijd' aanwezig zijn.");
@@ -1084,28 +1084,48 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         if (count == 1)
                         {
                             var dekkingInTijdGegevens = informatieobject.dekkingInTijd.FirstOrDefault(item => (item.dekkingInTijdType != null && !String.IsNullOrEmpty(item.dekkingInTijdType.begripLabel)) && Regex.IsMatch(item.dekkingInTijdType.begripLabel.Trim(), looptijdExpression, RegexOptions.IgnoreCase | RegexOptions.Singleline));
+
+                            if (String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdBegindatum))
+                            {
+                                var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                                currentErrorMessages.Add("Waarde 'dekkingInTijdBegindatum' ontbreekt voor het element 'dekkingInTijd' i.c.m. de waarde 'Looptijd' voor het subelement 'dekkingInTijdType/begripLabel'");
+                                schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                            }
                             if (String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdEinddatum))
                             {
                                 var currentErrorMessages = schemaResult.ErrorMessages.ToList();
                                 currentErrorMessages.Add("Waarde 'dekkingInTijdEinddatum' ontbreekt voor het element 'dekkingInTijd' i.c.m. de waarde 'Looptijd' voor het subelement 'dekkingInTijdType/begripLabel'");
                                 schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                             }
+                            if (String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdBegindatum) || String.IsNullOrEmpty(dekkingInTijdGegevens.dekkingInTijdEinddatum))
+                                return;
 
                             DateTime beginParseDate = DateTime.MinValue;
                             DateTime eindParseDate = DateTime.MinValue;
                             String beginDateWaarde = dekkingInTijdGegevens.dekkingInTijdBegindatum;
                             String eindDateWaarde = dekkingInTijdGegevens.dekkingInTijdEinddatum;
 
-                            string yearFormat = @"\d{4}";
-                            string yeahMonthFormat = @"\d{4}-\d{2}";
+                            string yearFormat = @"^\d{4}$";
+                            string yeahMonthFormat = @"^\d{4}-\d{2}$";
+                            string yeahMonthDayFormat = @"^\d{4}-\d{2}-\d{2}$";
 
                             bool isDateBegin = DateTime.TryParse(beginDateWaarde, out beginParseDate);
-                            bool isYearBegin = String.IsNullOrEmpty (beginDateWaarde) ? false : Regex.IsMatch(beginDateWaarde, yearFormat);
+                            bool isYearBegin = String.IsNullOrEmpty(beginDateWaarde) ? false : Regex.IsMatch(beginDateWaarde, yearFormat);
                             bool isYearMonthBegin = String.IsNullOrEmpty(beginDateWaarde) ? false : Regex.IsMatch(beginDateWaarde, yeahMonthFormat);
 
                             bool isDateEind = DateTime.TryParse(eindDateWaarde, out eindParseDate);
-                            bool isYearEind = String.IsNullOrEmpty(eindDateWaarde) ? false :  Regex.IsMatch(eindDateWaarde, yearFormat);
+                            bool isYearEind = String.IsNullOrEmpty(eindDateWaarde) ? false : Regex.IsMatch(eindDateWaarde, yearFormat);
                             bool isYearMonthEind = String.IsNullOrEmpty(eindDateWaarde) ? false : Regex.IsMatch(eindDateWaarde, yeahMonthFormat);
+
+                            if (!(Regex.IsMatch(beginDateWaarde, yearFormat) && Regex.IsMatch(eindDateWaarde, yearFormat)))
+                                if (!(Regex.IsMatch(beginDateWaarde, yeahMonthFormat) && Regex.IsMatch(eindDateWaarde, yeahMonthFormat)))
+                                    if (!(Regex.IsMatch(beginDateWaarde, yeahMonthDayFormat) && Regex.IsMatch(eindDateWaarde, yeahMonthDayFormat)))
+                                    {
+                                        var currentErrorMessages = schemaResult.ErrorMessages.ToList();
+                                        currentErrorMessages.Add("Datum notatie voor dekkingInTijdBegindatum en dekkingInTijdEinddatum komen niet overeen.");
+                                        schemaResult.ErrorMessages = currentErrorMessages.ToArray();
+                                        return;
+                                    }
 
                             if ((isDateBegin && isDateEind) || (isYearBegin && isYearEind) || (isYearMonthBegin && isYearMonthEind))
                             {
@@ -1171,13 +1191,13 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 {
                     return;//if not bestandsType, return immediate
                 }
-                
-                if(xmlDocument.Root.Name.LocalName == "ToPX")
-                {                   
+
+                if (xmlDocument.Root.Name.LocalName == "ToPX")
+                {
                     Entities.ToPX.v2_3_2.topxType topx = DeserializerHelper.DeSerializeObject<Entities.ToPX.v2_3_2.topxType>(File.ReadAllText(file));
                     var bestandObject = topx.Item as Entities.ToPX.v2_3_2.bestandType;
 
-                    if(bestandObject.formaat != null)
+                    if (bestandObject.formaat != null)
                     {
                         bestandObject.formaat.ToList().ForEach(item =>
                         {
@@ -1214,7 +1234,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 if (xmlDocument.Root.Name.LocalName == "MDTO")
                 {
                     Entities.MDTO.v1_0.mdtoType mdto = DeserializerHelper.DeSerializeObject<Entities.MDTO.v1_0.mdtoType>(File.ReadAllText(file));
-                    var bestandObject = mdto.Item as Entities.MDTO.v1_0.bestandType;       
+                    var bestandObject = mdto.Item as Entities.MDTO.v1_0.bestandType;
 
                     int i = -1;
                     bool parsed = Int32.TryParse(bestandObject.omvang, out i);
@@ -1225,7 +1245,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                         schemaResult.ErrorMessages = currentErrorMessages.ToArray();
                     }
 
-                    var physicalFile =file.Replace(".bestand.mdto.xml", string.Empty);//should remove .xml and .bestand.mdto
+                    var physicalFile = file.Replace(".bestand.mdto.xml", string.Empty);//should remove .xml and .bestand.mdto
                     FileInfo info = new FileInfo(physicalFile);
                     if (!info.Exists)
                     {
@@ -1265,20 +1285,20 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
         {
             INTELLECTUELE_EIGENDOM_CREATIVE_COMMONS_LICENTIES,
             INTELLECTUELE_EIGENDOM_DATABANKWET,
-            INTELLECTUELE_EIGENDOM_RIGHTS_STATEMENTS, 
+            INTELLECTUELE_EIGENDOM_RIGHTS_STATEMENTS,
             INTELLECTUELE_EIGENDOM_SOFTWARE_LICENTIES,
             INTELLECTUELE_EIGENDOM_WET_OP_DE_NABURIGE_RECHTEN,
             OPENBAARHEID_ARCHIEFWET_1995,
             OPENBAARHEID_ARCHIEFWET_2021,
             OPENBAARHEID_WET_OPEN_OVERHEID,
             PERSOONSGEGEVENS_AVG,
-            TRIGGERS, 
+            TRIGGERS,
             VOORKEURSFORMATEN
         }
 
         // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
         internal class Beperking : IEquatable<Beperking>
-        { 
+        {
             [JsonProperty("begripCode")]
             public string BegripCode { get; set; }
 
@@ -1287,7 +1307,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
 
             [JsonProperty("definitie")]
             public string Definitie { get; set; }
-           
+
             public bool Equals(Beperking other)
             {
                 bool sameLabel = (this.BegripLabel.Equals(other.BegripLabel, StringComparison.Ordinal));
@@ -1299,7 +1319,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
             public BeperkingResult IsItemValid(List<Beperking> beperkingenLijst)
             {
                 bool valid = false;
-                StringBuilder sb = new StringBuilder(); 
+                StringBuilder sb = new StringBuilder();
                 //if label is empty, result fails immediate
                 if (String.IsNullOrEmpty(this.BegripLabel))
                 {
@@ -1307,7 +1327,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                     return new BeperkingResult { IsSuccess = false, Results = new string[] { sb.ToString() } };
                 }
                 //if label is not empty, but code does, check only label
-                if(!String.IsNullOrEmpty(this.BegripLabel) && String.IsNullOrEmpty(this.BegripCode))
+                if (!String.IsNullOrEmpty(this.BegripLabel) && String.IsNullOrEmpty(this.BegripCode))
                 {
                     var beperkingGebruik = beperkingenLijst.FirstOrDefault(item => item.BegripLabel.Equals(this.BegripLabel, StringComparison.Ordinal));
                     if (beperkingGebruik == null)
@@ -1323,10 +1343,10 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Handlers
                 }
                 //check both if not empty
                 if (!String.IsNullOrEmpty(this.BegripLabel) && !String.IsNullOrEmpty(this.BegripCode))
-                {                    
+                {
                     bool contains = beperkingenLijst.Contains(this);
                     if (!contains)
-                        sb.Append(String.Format ("Element begripLabel: '{0}' in combinatie met element begripCode '{1}' niet gevonden in de begrippenlijst", this.BegripLabel, this.BegripCode));
+                        sb.Append(String.Format("Element begripLabel: '{0}' in combinatie met element begripCode '{1}' niet gevonden in de begrippenlijst", this.BegripLabel, this.BegripCode));
                     else
                         sb.Append(String.Format("Gevonden in de begrippenlijst: {0}", this.ToString()));
 

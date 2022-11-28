@@ -153,13 +153,13 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.openpreservationexchange.org/opex/v1.1")]
     public partial class manifest {
         
-        private file[] filesField;
+        private fileItem[] filesField;
         
         private string[] foldersField;
         
         /// <remarks/>
         [System.Xml.Serialization.XmlArrayItemAttribute("File", IsNullable=false)]
-        public file[] Files {
+        public fileItem[] Files {
             get {
                 return this.filesField;
             }
@@ -186,7 +186,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Opex
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://www.openpreservationexchange.org/opex/v1.1")]
-    public partial class file {
+    public partial class fileItem {
         
         private long sizeField;
         

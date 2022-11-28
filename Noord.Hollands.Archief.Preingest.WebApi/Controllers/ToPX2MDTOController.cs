@@ -39,7 +39,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             _eventHub = eventHub;
         }
 
-        [HttpPost("start_conversion/{guid}", Name = "Converting ToPX to MDTO", Order = 1)]
+        [HttpPost("start_conversion/{guid}", Name = "StartConvertingToPX2MDTO", Order = 1)]
         public IActionResult Convert(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -74,13 +74,13 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Converting ToPX to MDTO is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("update_fileformat/{guid}", Name = "Update file format with PRONOM properties in MDTO (bestandType)", Order = 2)]
-        public IActionResult UpdatePronum(Guid guid)
+        [HttpPost("update_fileformat/{guid}", Name = "UpdateFileFormatUsingPRONOMForMDTO", Order = 2)]
+        public IActionResult UpdatePronom(Guid guid)
         {
             if (guid == Guid.Empty)
                 return Problem("Empty GUID is invalid.");
 
-            _logger.LogInformation("Enter UpdatePronum.");
+            _logger.LogInformation("Enter UpdatePronom.");
 
             //database process id
             Guid processId = Guid.NewGuid();
@@ -105,11 +105,11 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
                 return ValidationProblem(e.Message, typeof(PronomPropsHandler).Name);
             }
 
-            _logger.LogInformation("Exit UpdatePronum.");
+            _logger.LogInformation("Exit UpdatePronom.");
             return new JsonResult(new { Message = String.Format("Update PRONOM in MDTO files (bestandType) is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("update_fixity/{guid}", Name = "Update file fixity in MDTO (bestandType)", Order = 3)]
+        [HttpPost("update_fixity/{guid}", Name = "UpdateFileFixityForMDTO", Order = 3)]
         public IActionResult UpdateFixity(Guid guid)
         {
             if (guid == Guid.Empty)
@@ -144,7 +144,7 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Controllers
             return new JsonResult(new { Message = String.Format("Update fixity in MDTO (bestandsType, SHA-256) is started."), SessionId = guid, ActionId = processId });
         }
 
-        [HttpPost("update_relationship/{guid}", Name = "Update relationship references in MDTO (informatieobjectType and bestandType)", Order = 4)]
+        [HttpPost("update_relationship/{guid}", Name = "UpdateRelationshipReferencesForMDTO", Order = 4)]
         public IActionResult UpdateRelationshipReferences(Guid guid)
         {
             if (guid == Guid.Empty)
