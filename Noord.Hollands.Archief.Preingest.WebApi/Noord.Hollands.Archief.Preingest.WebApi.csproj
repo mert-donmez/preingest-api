@@ -25,15 +25,13 @@
     <None Remove="Stylesheet\04-opex-files.xsl" />
     <None Remove="Stylesheet\05-opex-finalize.xsl" />
     <None Remove="Stylesheet\flatten.xsl" />
+    <None Remove="Schema\XIP-V6.xsd" />
   </ItemGroup>
 
   <ItemGroup>
 	<EmbeddedResource Include="Schema\OPEX-Metadata.xsd" />
-    <EmbeddedResource Include="Schema\MDTO-XML 0.9.xsd" />
+    <EmbeddedResource Include="Schema\XIP-V6.xsd" />
     <EmbeddedResource Include="Schema\MDTO-XML 1.0.xsd" />
-    <EmbeddedResource Include="Schema\ToPX-2.1.xsd" />
-    <EmbeddedResource Include="Schema\ToPX-2.2.xsd" />
-    <EmbeddedResource Include="Schema\ToPX-2.3_1.xsd" />
     <EmbeddedResource Include="Schema\ToPX-2.3_2.xsd" />
     <EmbeddedResource Include="Stylesheet\00-opex-strip-namespaces.xsl" />
     <EmbeddedResource Include="Stylesheet\01-opex-add-namespaces.xsl" />
@@ -48,12 +46,12 @@
     <PackageReference Include="ClosedXML" Version="0.97.0" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
     <PackageReference Include="itext7" Version="7.2.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -72,10 +70,6 @@
 
   <ItemGroup>
     <Folder Include="Connected Services\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Schema\OPEX-Metadata.xsd" />
   </ItemGroup>
 
   <ItemGroup>

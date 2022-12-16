@@ -38,7 +38,8 @@ namespace Noord.Hollands.Archief.Preingest.WebApi.Entities.Service
         FixityPropsHandler,
         BinaryFileObjectValidationHandler,
         BinaryFileMetadataMutationHandler,
-        BuildNonMetadataOpexHandler
+        BuildNonMetadataOpexHandler,
+        RevertCollectionHandler
     }
 
 
